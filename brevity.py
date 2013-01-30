@@ -4,11 +4,11 @@ Making a change!
 """
 import re, os
 
-
+##########  MODEL  ##########
 class socket(object):
 	"""Store text. 
-	Identify variables present in said text. 
-	Enable text (& variables) to be extended.
+	Identify variables present in said text with default values. 
+	Enable text (& variables) to be extended via a linked node.
 
 	"""
 	txt = '' #what happens when I remove this line?
@@ -57,8 +57,7 @@ class node(object):
 
 class document(object):
 	"""Define initial document structured via an [ordered] array of nodes. 
-	Contain instance variables. 
-	Provide external access to document contents.
+	Contain instance variables.
 
 	"""
 	nodes = []
@@ -68,6 +67,12 @@ class document(object):
 		
 	def __str__(self): 
 		"""print stuff?"""
+
+##########  CONTROLLER  ##########
+class traverse(object):
+	"""Traverse tree downwards, performing a specified action at each level.
+
+	"""
 
 class compiler(object): 
 	"""
@@ -134,17 +139,17 @@ class printer(object):
 	
 class comparer(object):
 	"""
-	Can I link object A to object B, directly, or to any of its children?
-	Which objects can be linked to object A, directly, or to any of its children?
+	Q1: Can I link object A to object B[, or to any of its children]?
+	Q2: Which objects can be linked to object A, directly, or to any of its children?
 	
 	"""
 
 	def isCompatible(self, parent, child):
-		"""
-		Check nodes for compatibility
-		Parent node must have a socket whose variables exist in the child's socket(s)
-		Expand to return missing vars if there are any?
-
+		"""Q1: Can I link object A to object B[, or to any of its children]?  
+		Check nodes for compatibility 
+		Parent node must have a socket whose variables exist in the child's socket(s) 
+		Expand to return missing vars if there are any?  
+		
 		"""
 		childVars = set(child.getVars())
 		for x in parent.sockets:
@@ -166,10 +171,7 @@ class comparer(object):
 		place = self.__recNodeCompare()
 		
 #	def __recNodeCompare(self, comp1, comp2):
-		#dive!
-
-#class finder(object):
-#	"""This class will do something. I promise."""
+		#dive
 
 def main():
 #Create Tier 1 Sockets
