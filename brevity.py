@@ -73,6 +73,8 @@ class traverse(object):
 	"""Traverse tree downwards, performing a specified action at each level.
 
 	"""
+	pass
+
 
 class compiler(object): 
 	"""
@@ -143,7 +145,6 @@ class comparer(object):
 	Q2: Which objects can be linked to object A, directly, or to any of its children?
 	
 	"""
-
 	def isCompatible(self, parent, child):
 		"""Q1: Can I link object A to object B[, or to any of its children]?  
 		Check nodes for compatibility 
@@ -156,23 +157,7 @@ class comparer(object):
 			if set(x.vars).issubset(childVars):
 				return 1
 		return -1
-		
-	def nodeCompare(self, comp1, comp2, recursive = False):
-		"""
-		1st parameter is the destination -- the tree
-		2nd parameter is the alien Node being compared to part or all of the tree at and beneath the 1st parameter
-		
-		"""
-		#if comp1 and comp2 are not both nodes, raise an exception
-		place = [isCompatible(comp1, comp2)]
-		if recursive == False:
-			return place
-		
-		place = self.__recNodeCompare()
-		
-#	def __recNodeCompare(self, comp1, comp2):
-		#dive
-
+	
 def main():
 #Create Tier 1 Sockets
 	test0 = socket('My name is A{name}.', 
