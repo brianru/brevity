@@ -11,12 +11,12 @@ class socket(object):
 	Enable text (& variables) to be extended via a linked node.
 
 	"""
-	txt = '' #what happens when I remove this line?
-	vars = dict() #what happens when I remove this line?
+	text = ''
+	vars = dict()
 	link = None
 	
-	def __init__(self, txt = '', vars = dict(), link = None):
-		self.txt = txt
+	def __init__(self, text = '', vars = {}, link = None):
+		self.text = txt
 		self.vars = vars
 		self.link = link
 
@@ -24,7 +24,7 @@ class socket(object):
 		if self.link:
 			return '--->\n' + str(self.link) #refactor to show deprecated socket, with proper formatting
 		else:
-			return 'Type: %s \n    Text: %s \n    Variables: %s' % (type(self), self.txt, self.vars)
+			return 'Type: %s \n    Text: %s \n    Variables: %s' % (type(self), self.text, self.vars)
 
 	def linkToNode(self, node):
 		self.link = node
@@ -40,13 +40,16 @@ class node(object):
 
 	"""
 	sockets = []
+	
 	def __init__(self, sockets):
 		self.sockets = sockets
+		
 	def getVars(self):
 		allVars = []
 		for x in sockets:
 			allVars.append(x.vars.keys())
 		return allVars	
+	
 	def __str__(self):
 		"""Print a summary of the Node."""
 		output = []
@@ -61,9 +64,11 @@ class document(object):
 
 	"""
 	nodes = []
+	instanceVars = dict()
 	
-	def __init__(self, nodes):
+	def __init__(self, nodes, instanceVars = {}):
 		self.nodes = nodes
+		self.instanceVars = instanceVars
 		
 	def __str__(self): 
 		"""print stuff?"""
@@ -157,9 +162,24 @@ class comparer(object):
 			if set(x.vars).issubset(childVars):
 				return 1
 		return -1
+
+class USConstitution(unittest.TestCase):
+	"""Construct the .txt version of the US constitution.
+	Refactor to test a suite of documents.
+
+	"""
+	def test_US_Constitution(self):
+		pass
 	
+class SimUser(unittest.TestCase):
+	"""Simulate a user defining and drafting a document.
+
+	"""
+	def test_Sim_User(self):
+		pass
+
 def main():
-#Create Tier 1 Sockets
+	#Create Tier 1 Sockets
 	test0 = socket('My name is A{name}.', 
 	               {'name': 'Brian J Rubinton'})
 	test1 = socket('I live at A{address}.', 
@@ -199,4 +219,4 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+	unittest.main()
