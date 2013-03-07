@@ -26,17 +26,30 @@ class socket(object):
 	3) Linked Node
     
     """
-    def __init__(self, text, variables = dict(), linkedNode = None):
+    def __init__(self, text, variables = dict(), linked_node = None):
 	self.text = text
 	self.variables = variables
-        self.linkNode(linkNode)
+        self.linked_node = linked_node
 
     def __str__(self)
-        pass #Object type \n Variables \n Uncompiled text
+        return 'COmponent type: %s \n
+		Text: %s \n
+		Default variables: %s \n
+		Linked node? %s \n' % (type(self), self.text, self.variables, if(linked_node))
 
-    def linkNode(self, newNode):
-	#if node's sockets contain vars in this socket, OK, otherwise raise exception
-	pass
+    def linkNode(self, new_node):
+	"""Attempts to update the linked node.
+	Does not raise an exception if this is replacing an existing linked node.
+	Raises exception if the node is incompatible.
+
+	"""	    
+	node_vars = []
+	for x in new_node.sockets:
+	    node_vars.append(x.variables.keys())
+	if self.variables.issubset(node_vars):
+	    linked_node = new_node
+	    return True
+        return False
 
 class node(object):
     """Intermediary structure. Provides constraints.
@@ -49,27 +62,44 @@ class node(object):
 	#raise exception if 1) sockets does not contain only sockets or 2) sockets is empty
 
     def __str__(self):
-	pass #Object type \n Sockets \n Linked Nodes \n ...
+	return 'Component type: %s \n
+	        Number of sockets: %d' % (type(self), len(sockets))
     
 class document(object):
     """Top structure. Contains instance variables. Separates document components from particular document instance.
     Contains:
         1) Nodes
 	2) Instance variables
+	3) Cached array of full variable set
+	4) Cached compiled document.
+    
     """
+    def __init__(self, nodes, variables = dict()):
+	self.nodes = nodes
+	self.variables = variables
 
-##### VIEW #####
+    cached_compile = None
+    cached_vars = None
+
+    def stale_cache(self, fresh_compile = None, fresh_vars = None):
+	if fresh_compile: cached_compile = fresh_compile
+	if fresh_vars: cached_vars = fresh_vars
+
+##### CONTROLLER #####
+
+class docIterator(object):
+    """Iterate through document in most efficient manner. """
+
 class compiler(object):
-    """Output formatted object.
-
+    """Use docIterator to aggregate active objects and output formatted object.
+    STRATEGY for different raw formats (txt, md, tex)
+    
     """
 
 class printer(object):
     """Output raw object with variable placeholders and values.
 
     """
-
-##### CONTROLLER #####
 
 class new(object):
     """CLI to create objects.
@@ -84,6 +114,35 @@ class br_controller(object):
 class list(object):
     """Display cached (working) objects.
 
+    """ 
+
+class us_constitution_static_test(unittest.TestCase):
+    """Import US constitution (cumulative of all amendments) from a prepared .brvty file.
+    Build .tex file.
+    Compile into .txt -- then compare to existing .txt file.
+    Compile into .pdf.
+    
     """
 
-if __name__ == 
+class us_constitution_dynamic_test(unittest.TestCase):
+    """Import US constitution and each amendment independently from a set of prepared .brvty files.
+    Build .tex file for each 50 years.
+    Compile each into .txt and compare to existing .txt file.
+    Compile into .pdf at each point.
+    
+    """
+
+class core_test(unittest.TestCase):
+    """Test core functionality excluding interface """
+    preamble_clause = socket('This is a purchase order for the monthly delivery of socks.',[frequency: monthly])) #insert updated variable syntax
+    print preamble_clause
+    preamble = node(preamble_clause)
+    print preamble
+
+
+    socks = document()
+    print socks
+
+
+if __name__ == "__main__":
+    unititest.main()
