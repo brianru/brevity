@@ -14,7 +14,7 @@ Options:
 
 """
 
-import re, os
+import re, os, unittest
 
 ##### MODEL #####
 
@@ -32,10 +32,7 @@ class socket(object):
         self.linked_node = linked_node
 
     def __str__(self):
-        return 'COmponent type: %s \n
-		Text: %s \n
-		Default variables: %s \n
-		Linked node? %s \n' % (type(self), self.text, self.variables, if(linked_node))
+        return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s' % (type(self), self.text, self.variables, self.linked_node)
     def accept(self, visitor):
         visitor.visit_socket(self)
     def linkNode(self, new_node):
@@ -60,12 +57,12 @@ class node(object):
         1) Sockets
     
     """
+    sockets = []
     def __init__(self, sockets):
 	self.sockets = sockets
 	#raise exception if 1) sockets does not contain only sockets or 2) sockets is empty
     def __str__(self):
-	return 'Component type: %s \n
-	        Number of sockets: %d' % (type(self), len(sockets))
+	return 'Component type: %s /nNumber of sockets: %s' % (type(self), self.sockets)
     def accept(self, visitor):
 	visitor.visit_node(self)
     
@@ -107,23 +104,21 @@ class visitor(object):
 	pass
 
 class compiler(visitor):
-    """Use docIterator to aggregate active objects and output formatted object.
-    STRATEGY for different raw formats (txt, md, tex)
+    """Iterates through document structure, accumulating text and variables at each step. 
+    Attributes: result_text, result_compiled_text, result_variables
     
     """
     def __init__(self):
         result_variables = dict()
         result_text = ''
-
+	result_compiled_text = ''
     def visit_document(self, document):
 	result_variables = document.variables
 	for x in document.nodes:
 	    x.accept(self)
-    
     def visit_node(self, node):
 	for y in node.sockets:
 	    y.accept(self)
-
     def visit_socket(self, socket):
 	if socket.linked_node:
             socket.linked_node.accept(self)
@@ -131,9 +126,11 @@ class compiler(visitor):
 	    result_text.append('/n' + socket.text)
 	    #this check should only be adding defaults not redefined in doc instance
 	    #refactor document construction methods if otherwise
-	    for j in socket.variables.keys()
+	    for j in socket.variables.iterkeys():
 	        if j not in result_variables.keys():
 		    result_variables.update(j, y.variables[j])
+    def compile(self):
+	result_compiled_text = re.sub(r'A{\w.*?)}',result_variables["\1"], result_text)
 
 class printer(visitor):
     """Output raw object with variable placeholders and values.
@@ -160,15 +157,13 @@ class us_constitution_dynamic_test(unittest.TestCase):
 
 class core_test(unittest.TestCase):
     """Test core functionality excluding interface """
-    preamble_clause = socket('This is a purchase order for the monthly delivery of socks.',[frequency: monthly])) #insert updated variable syntax
+    preamble_clause = socket('This is a purchase order for the A{frequency} delivery of socks.', {'frequency': 'monthly'})
     print preamble_clause
     preamble = node(preamble_clause)
     print preamble
-
-
-    socks = document()
+    socks = document(preamble)
     print socks
 
 
 if __name__ == "__main__":
-    unititest.main()
+    unittest.main()

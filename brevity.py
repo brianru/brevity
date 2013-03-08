@@ -16,7 +16,7 @@ class socket(object):
 	link = None
 	
 	def __init__(self, text = '', vars = {}, link = None):
-		self.text = txt
+                self.text = text
 		self.vars = vars
 		self.link = link
 
