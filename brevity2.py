@@ -103,6 +103,31 @@ class visitor(object):
     def visit_document(self, document):
 	pass
 
+class director(object):
+    def __init__(self):
+	"""Create a concrete builder."""
+    def build_socket(self, socket):
+        pass
+    def build_node(self, node):
+        pass
+
+class constructionDirector(object):
+    def __init__(self):
+        """Create the appropriate builder."""
+    def visit_document(self, document):
+	builder.build_document(document):
+	iter.next().accept(self)
+    def visit_node(self, node):
+	iter.next().accept(self)
+    def visit_socket(self, socket):
+	if socket.linked_node:
+	    iter.next().accept(self)
+	else:
+	    builder.build_socket(socket)
+
+class iterator(iter):
+"""Define an iterator that takes all the for encapsulates all the for loops in the below compiler implementation. """
+
 class compiler(visitor):
     """Iterates through document structure, accumulating text and variables at each step. 
     Attributes: result_text, result_compiled_text, result_variables
@@ -130,6 +155,7 @@ class compiler(visitor):
 	        if j not in result_variables.keys():
 		    result_variables.update(j, y.variables[j])
     def compile(self):
+	"""Refactor to move EVERY OTHER method in this class to other classes. """
 	result_compiled_text = re.sub(r'A{\w.*?)}',result_variables["\1"], result_text)
 
 class printer(visitor):
