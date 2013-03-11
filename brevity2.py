@@ -91,79 +91,70 @@ class document(object):
 
 ##### CONTROLLER #####
 
-class docIterator(object):
+class DocumentIterator(object): 
     """Iterate through document in most efficient manner. """
 
-class visitor(object):
-    """Abstract class defines interface for visitor classes."""
-    def visit_socket(self, socket):
-	pass
-    def visit_node(self, node):
-	pass
-    def visit_document(self, document):
-	pass
+class Visitor(object):
+    "Abstract class. Defines interface for visitor classes."""
 
-class director(object):
+class ConstructionDirectorVisitor(Visitor):
+    """Directs construction of any document component. Visits components to route proper actions."""
     def __init__(self):
-	"""Create a concrete builder."""
-    def build_socket(self, socket):
-        pass
-    def build_node(self, node):
-        pass
-
-class constructionDirector(object):
-    def __init__(self):
-        """Create the appropriate builder."""
-    def visit_document(self, document):
-	builder.build_document(document):
-	iter.next().accept(self)
-    def visit_node(self, node):
-	iter.next().accept(self)
+	iter = DocumentIterator()
+        builder = ConstructionBuilder()
+    def construct(self, component):
+	"""Return cumulative active text and variables of component incl. all sub-components."""
+	#reset constructor, builder and iterator
+	component.accept()
+        return builder.raw_text, builder.variables
     def visit_socket(self, socket):
 	if socket.linked_node:
 	    iter.next().accept(self)
 	else:
-	    builder.build_socket(socket)
-
-class iterator(iter):
-"""Define an iterator that takes all the for encapsulates all the for loops in the below compiler implementation. """
-
-class compiler(visitor):
-    """Iterates through document structure, accumulating text and variables at each step. 
-    Attributes: result_text, result_compiled_text, result_variables
-    
-    """
-    def __init__(self):
-        result_variables = dict()
-        result_text = ''
-	result_compiled_text = ''
-    def visit_document(self, document):
-	result_variables = document.variables
-	for x in document.nodes:
-	    x.accept(self)
+            builder.build_socket(socket)
     def visit_node(self, node):
-	for y in node.sockets:
-	    y.accept(self)
-    def visit_socket(self, socket):
-	if socket.linked_node:
-            socket.linked_node.accept(self)
-	else:
-	    result_text.append('/n' + socket.text)
-	    #this check should only be adding defaults not redefined in doc instance
-	    #refactor document construction methods if otherwise
-	    for j in socket.variables.iterkeys():
-	        if j not in result_variables.keys():
-		    result_variables.update(j, y.variables[j])
-    def compile(self):
-	"""Refactor to move EVERY OTHER method in this class to other classes. """
-	result_compiled_text = re.sub(r'A{\w.*?)}',result_variables["\1"], result_text)
+	iter.next().accept(self)
+    def visit_document(self, document):
+	builder.build_document(document)
+	iter.next().accept(self)
 
-class printer(visitor):
+class Builder(object):
+    "Abstract class. Defines interface for builder classes."""
+
+class ConstructionBuilder(Builder):
+    def __init__(self):
+	"""Hide internal representation of document.
+	Must suffice for all potential uses.
+	
+	"""
+	raw_text = ''
+	variables = dict()
+    def build_socket(self, socket):
+        raw_text.append(socket.text)
+	#add dictionary components only if names are not already there
+    def build_node(self, node):
+	pass
+    def build_document(self, document):
+	variables = document.variables
+
+class Compiler(object):
+    """Constructs component structure then inserts variable values into text."""
+    def __init__(self):
+	constructor = ConstructionDirectorVisitor()
+    def compile(self, component):
+	raw_text, variables = constructor.construct(component)
+	compiled_text = re.sub(r'A{\w.*?)}', variables["\1"], raw_text)
+
+class Printer(Visitor):
     """Output raw object with variable placeholders and values.
+    Use STRATEGY pattern to for different document formats.
 
     """
     def __init__(self):
         result_text = ''
+
+class FindComparable(Visitor):
+
 
 class us_constitution_static_test(unittest.TestCase):
     """Import US constitution (cumulative of all amendments) from a prepared .brvty file.
