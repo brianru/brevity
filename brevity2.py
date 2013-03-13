@@ -91,11 +91,29 @@ class document(object):
 
 ##### CONTROLLER #####
 
-class DocumentIterator(object): 
-    """Iterate through document in most efficient manner. """
-
 class Visitor(object):
     "Abstract class. Defines interface for visitor classes."""
+    def __init__(self):
+	pass
+    def visit_socket(self, socket):
+	pass
+    def visit_node(self, node):
+	pass
+    def visit_document(self, document):
+	pass
+
+class TraversalVisitor(Visitor):
+    def __init__(self, component):
+	component.accept()
+    def visit_socket(self, socket):
+	try socket.linked_node.accept()
+	except yield socket
+    def visit_node(self, node):
+	for x in node.sockets:
+	    yield x.accept()
+    def visit_document(self, document):
+	for x in document.nodes:
+        yield x.accept()
 
 class ConstructionDirectorVisitor(Visitor):
     """Directs construction of any document component. Visits components to route proper actions."""
@@ -120,6 +138,14 @@ class ConstructionDirectorVisitor(Visitor):
 
 class Builder(object):
     "Abstract class. Defines interface for builder classes."""
+    def __init__(self):
+	pass
+    def build_socket(self, socket):
+	pass
+    def build_node(self, node):
+        pass
+    def build_document(self, document):
+	pass
 
 class ConstructionBuilder(Builder):
     def __init__(self):
