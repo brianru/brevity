@@ -33,6 +33,8 @@ class socket(object):
 
     def __str__(self):
         return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s' % (type(self), self.text, self.variables, self.linked_node)
+    def __iter__(self):
+	return TraversalIterator()
     def accept(self, visitor):
         visitor.visit_socket(self)
     def linkNode(self, new_node):
@@ -63,6 +65,8 @@ class node(object):
 	#raise exception if 1) sockets does not contain only sockets or 2) sockets is empty
     def __str__(self):
 	return 'Component type: %s /nNumber of sockets: %s' % (type(self), self.sockets)
+    def __iter__(self):
+	return TraversalVisitor()
     def accept(self, visitor):
 	visitor.visit_node(self)
     
@@ -78,7 +82,8 @@ class document(object):
     def __init__(self, nodes, variables = dict()):
 	self.nodes = nodes
 	self.variables = variables
-
+    def __iter__(self):
+	return TraversalVisitor()
     def accept(self, visitor):
 	visitor.visit_document(self)
 
@@ -104,37 +109,40 @@ class Visitor(object):
 
 class TraversalVisitor(Visitor):
     def __init__(self, component):
-	component.accept()
+	self.next(component)
+    def next(self, component):
+	component.accept(self)
     def visit_socket(self, socket):
-	try socket.linked_node.accept()
-	except yield socket
+	try: socket.linked_node.accept(self)
+	except StopIteration: yield socket
     def visit_node(self, node):
 	for x in node.sockets:
-	    yield x.accept()
+	    yield x.accept(self)
     def visit_document(self, document):
 	for x in document.nodes:
-        yield x.accept()
+            yield x.accept(self)
 
 class ConstructionDirectorVisitor(Visitor):
     """Directs construction of any document component. Visits components to route proper actions."""
     def __init__(self):
-	iter = DocumentIterator()
-        builder = ConstructionBuilder()
+	"""Is there anything to do here?"""
+	self.builder = ConstructionBuilder()
     def construct(self, component):
 	"""Return cumulative active text and variables of component incl. all sub-components."""
 	#reset constructor, builder and iterator
-	component.accept()
-        return builder.raw_text, builder.variables
+	self.iter = TraversalVisitor(component)
+	component.accept(self)
+        return self.builder.raw_text, self.builder.variables
     def visit_socket(self, socket):
 	if socket.linked_node:
-	    iter.next().accept(self)
+	    self.iter.next(socket)
 	else:
-            builder.build_socket(socket)
+            self.builder.build_socket(socket)
     def visit_node(self, node):
-	iter.next().accept(self)
+	self.iter.next(node)
     def visit_document(self, document):
-	builder.build_document(document)
-	iter.next().accept(self)
+	self.builder.build_document(document)
+	self.iter.next(document)
 
 class Builder(object):
     "Abstract class. Defines interface for builder classes."""
@@ -153,10 +161,10 @@ class ConstructionBuilder(Builder):
 	Must suffice for all potential uses.
 	
 	"""
-	raw_text = ''
-	variables = dict()
+	self.raw_text = ''
+	self.variables = dict()
     def build_socket(self, socket):
-        raw_text.append(socket.text)
+        self.raw_text.append(socket.text)
 	#add dictionary components only if names are not already there
     def build_node(self, node):
 	pass
@@ -166,8 +174,9 @@ class ConstructionBuilder(Builder):
 class Compiler(object):
     """Constructs component structure then inserts variable values into text."""
     def __init__(self):
-	constructor = ConstructionDirectorVisitor()
+	"""Does anything need to be done here?"""
     def compile(self, component):
+	constructor = ConstructionDirectorVisitor()
 	raw_text, variables = constructor.construct(component)
 	compiled_text = re.sub(r'A{\w.*?)}', variables["\1"], raw_text)
 
@@ -176,11 +185,11 @@ class Printer(Visitor):
     Use STRATEGY pattern to for different document formats.
 
     """
-    def __init__(self):
-        result_text = ''
-
-class FindComparable(Visitor):
-
+    def export(self, component):
+	constructor = ConstructionDirectorVisitor()
+	raw_text, variables = constructor.construct(component)
+	print raw_text
+	print variables
 
 class us_constitution_static_test(unittest.TestCase):
     """Import US constitution (cumulative of all amendments) from a prepared .brvty file.
@@ -206,6 +215,8 @@ class core_test(unittest.TestCase):
     print preamble
     socks = document(preamble)
     print socks
+    p = Printer()
+    p.export(socks)
 
 
 if __name__ == "__main__":
