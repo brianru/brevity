@@ -1,222 +1,223 @@
-"""Usage: something
-Making a change!
+"""Brevity 0.2
+
+Usage: 
+    brevity -h | --help
+    brevity new socket <text> <variables> <linkedNode>
+    brevity new node <sockets>
+    brevity new document <nodes> <instanceVariables>
+    brevity new
+    brevity -ls | --list
+
+Options:
+    -h | --help Show the help docstring.
+    -ls | --list Print cached (working) object list.
 
 """
-import re, os
 
-##########  MODEL  ##########
+import re, os, unittest
+
+##### MODEL #####
+
 class socket(object):
-	"""Store text. 
-	Identify variables present in said text with default values. 
-	Enable text (& variables) to be extended via a linked node.
+    """Lowest level structure.
+    Contains:
+        1) Uncompiled text (with variable placeholders)
+	2) Variable defaults
+	3) Linked Node
+    
+    """
+    def __init__(self, text, variables = dict(), linked_node = None):
+	self.text = text
+	self.variables = variables
+        self.linked_node = linked_node
 
-	"""
-	text = ''
-	vars = dict()
-	link = None
-	
-	def __init__(self, text = '', vars = {}, link = None):
-                self.text = text
-		self.vars = vars
-		self.link = link
+    def __str__(self):
+        return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s' % (type(self), self.text, self.variables, self.linked_node)
+    def __iter__(self):
+	return TraversalIterator()
+    def accept(self, visitor):
+        visitor.visit_socket(self)
+    def linkNode(self, new_node):
+	"""Attempts to update the linked node.
+	Does not raise an exception if this is replacing an existing linked node.
+	Raises exception if the node is incompatible.
 
-	def __str__(self):
-		if self.link:
-			return '--->\n' + str(self.link) #refactor to show deprecated socket, with proper formatting
-		else:
-			return 'Type: %s \n    Text: %s \n    Variables: %s' % (type(self), self.text, self.vars)
-
-	def linkToNode(self, node):
-		self.link = node
-		
-	def getVars(self, key):#refactor as a vars access method?
-		"""Replaces a specified key with its corresponding value in the socket's dictionary.
-		
-		"""
-		return self.vars[key.group(1)]
+	"""	    
+	node_vars = []
+	for x in new_node.sockets:
+	    node_vars.append(x.variables.keys())
+	#build separate method in socket to perform below comparison
+	#if new_node >= self
+	if self.variables.issubset(node_vars): 
+	    linked_node = new_node
+	    return True
+        return False
 
 class node(object):
-	"""Define document structure via an [ordered] array of sockets.
-
-	"""
-	sockets = []
-	
-	def __init__(self, sockets):
-		self.sockets = sockets
-		
-	def getVars(self):
-		allVars = []
-		for x in sockets:
-			allVars.append(x.vars.keys())
-		return allVars	
-	
-	def __str__(self):
-		"""Print a summary of the Node."""
-		output = []
-		output.append('Type: %s' % (type(self))) #begin by identifying the node's type
-		for x in self.sockets:
-			output.append(str(x))
-		return '\n'.join(output)
-
+    """Intermediary structure. Provides constraints.
+    Contains:
+        1) Sockets
+    
+    """
+    sockets = []
+    def __init__(self, sockets):
+	self.sockets = sockets
+	#raise exception if 1) sockets does not contain only sockets or 2) sockets is empty
+    def __str__(self):
+	return 'Component type: %s /nNumber of sockets: %s' % (type(self), self.sockets)
+    def __iter__(self):
+	return TraversalVisitor()
+    def accept(self, visitor):
+	visitor.visit_node(self)
+    
 class document(object):
-	"""Define initial document structured via an [ordered] array of nodes. 
-	Contain instance variables.
+    """Top structure. Contains instance variables. Separates document components from particular document instance.
+    Contains:
+        1) Nodes
+	2) Instance variables
+	3) Cached array of full variable set
+	4) Cached compiled document.
+    
+    """
+    def __init__(self, nodes, variables = dict()):
+	self.nodes = nodes
+	self.variables = variables
+    def __iter__(self):
+	return TraversalVisitor()
+    def accept(self, visitor):
+	visitor.visit_document(self)
 
-	"""
-	nodes = []
-	instanceVars = dict()
-	
-	def __init__(self, nodes, instanceVars = {}):
-		self.nodes = nodes
-		self.instanceVars = instanceVars
-		
-	def __str__(self): 
-		"""print stuff?"""
+    cached_compile = None
+    cached_vars = None
 
-##########  CONTROLLER  ##########
-class traverse(object):
-	"""Traverse tree downwards, performing a specified action at each level.
+    def stale_cache(self, fresh_compile = None, fresh_vars = None):
+	if fresh_compile: cached_compile = fresh_compile
+	if fresh_vars: cached_vars = fresh_vars
 
-	"""
+##### CONTROLLER #####
+
+class Visitor(object):
+    "Abstract class. Defines interface for visitor classes."""
+    def __init__(self):
+	pass
+    def visit_socket(self, socket):
+	pass
+    def visit_node(self, node):
+	pass
+    def visit_document(self, document):
 	pass
 
+class TraversalVisitor(Visitor):
+    def __init__(self, component):
+	self.next(component)
+    def next(self, component):
+	component.accept(self)
+    def visit_socket(self, socket):
+	try: socket.linked_node.accept(self)
+	except StopIteration: yield socket
+    def visit_node(self, node):
+	for x in node.sockets:
+	    yield x.accept(self)
+    def visit_document(self, document):
+	for x in document.nodes:
+            yield x.accept(self)
 
-class compiler(object): 
-	"""
-	Recursively compile whichever document component is passed to the compiler.
-	Supports raw text or latex code.
+class ConstructionDirectorVisitor(Visitor):
+    """Directs construction of any document component. Visits components to route proper actions."""
+    def __init__(self):
+	"""Is there anything to do here?"""
+	self.builder = ConstructionBuilder()
+    def construct(self, component):
+	"""Return cumulative active text and variables of component incl. all sub-components."""
+	#reset constructor, builder and iterator
+	self.iter = TraversalVisitor(component)
+	component.accept(self)
+        return self.builder.raw_text, self.builder.variables
+    def visit_socket(self, socket):
+	if socket.linked_node:
+	    self.iter.next(socket)
+	else:
+            self.builder.build_socket(socket)
+    def visit_node(self, node):
+	self.iter.next(node)
+    def visit_document(self, document):
+	self.builder.build_document(document)
+	self.iter.next(document)
+
+class Builder(object):
+    "Abstract class. Defines interface for builder classes."""
+    def __init__(self):
+	pass
+    def build_socket(self, socket):
+	pass
+    def build_node(self, node):
+        pass
+    def build_document(self, document):
+	pass
+
+class ConstructionBuilder(Builder):
+    def __init__(self):
+	"""Hide internal representation of document.
+	Must suffice for all potential uses.
 	
 	"""
-	
-	output = [] #build code to handle multiple compile calls
-	backupOutput = []
-	
-	def __compileSocket(self, component):
-		"""Only compile method to actually update the output array.
-		   Which means the # of items in output = the # of active sockets.
-		   
-		"""
-		if component.link:
-			self.__compileNode(component.link)
-		else:
-			self.output.append(re.sub(r'A{(\w.*?)}', component.getVars, component.txt)) 
-	
-	def __compileNode(self, component):
-		for x in component.sockets:
-			self.__compileSocket(x)
-	
-	def __compileDocument(self, component):
-		for x in component.nodes:
-			self.__compileNode(x)
-	
-	def compile(self, component, latex = False):
-		"""Routing method."""
-		if not self.output:
-			self.backupOutput.append(self.output)
-			self.output = []
+	self.raw_text = ''
+	self.variables = dict()
+    def build_socket(self, socket):
+        self.raw_text.append(socket.text)
+	#add dictionary components only if names are not already there
+    def build_node(self, node):
+	pass
+    def build_document(self, document):
+	variables = document.variables
 
-		if component.__class__.__name__ == 'socket':
-			self.__compileSocket(component)
-		elif component.__class__.__name__ == 'node':
-			self.__compileNode(component)
-		elif component.__class__.__name__ == 'document':
-			self.__compileDocument(component)
-		else:
-			return "What are you passing me?!?"
-		
-		if latex:
-			self.output.insert(0,"\\documentclass[12pt]{article}")
-			self.output.insert(0,"\\begin{document}")
-			self.output.append("\\end{document}")
-			
-			f = open('doc.tex', 'w') #append number to filename to enable multiple calls to compile latex
-			print f
-			f.write('\n'.join(self.output))
-			f.close()
-			
-			os.system("pdflatex doc.tex")
-			
-			return 'Seccesfully generated doc.pdf!'
-			
-		else:
-			return self.output
+class Compiler(object):
+    """Constructs component structure then inserts variable values into text."""
+    def __init__(self):
+	"""Does anything need to be done here?"""
+    def compile(self, component):
+	constructor = ConstructionDirectorVisitor()
+	raw_text, variables = constructor.construct(component)
+	compiled_text = re.sub(r'A{\w.*?)}', variables["\1"], raw_text)
 
-class printer(object): 
-	"""this will print stuff"""
-	
-class comparer(object):
-	"""
-	Q1: Can I link object A to object B[, or to any of its children]?
-	Q2: Which objects can be linked to object A, directly, or to any of its children?
-	
-	"""
-	def isCompatible(self, parent, child):
-		"""Q1: Can I link object A to object B[, or to any of its children]?  
-		Check nodes for compatibility 
-		Parent node must have a socket whose variables exist in the child's socket(s) 
-		Expand to return missing vars if there are any?  
-		
-		"""
-		childVars = set(child.getVars())
-		for x in parent.sockets:
-			if set(x.vars).issubset(childVars):
-				return 1
-		return -1
+class Printer(Visitor):
+    """Output raw object with variable placeholders and values.
+    Use STRATEGY pattern to for different document formats.
 
-class USConstitution(unittest.TestCase):
-	"""Construct the .txt version of the US constitution.
-	Refactor to test a suite of documents.
+    """
+    def export(self, component):
+	constructor = ConstructionDirectorVisitor()
+	raw_text, variables = constructor.construct(component)
+	print raw_text
+	print variables
 
-	"""
-	def test_US_Constitution(self):
-		pass
-	
-class SimUser(unittest.TestCase):
-	"""Simulate a user defining and drafting a document.
+class us_constitution_static_test(unittest.TestCase):
+    """Import US constitution (cumulative of all amendments) from a prepared .brvty file.
+    Build .tex file.
+    Compile into .txt -- then compare to existing .txt file.
+    Compile into .pdf.
+    
+    """
 
-	"""
-	def test_Sim_User(self):
-		pass
+class us_constitution_dynamic_test(unittest.TestCase):
+    """Import US constitution and each amendment independently from a set of prepared .brvty files.
+    Build .tex file for each 50 years.
+    Compile each into .txt and compare to existing .txt file.
+    Compile into .pdf at each point.
+    
+    """
 
-def main():
-	#Create Tier 1 Sockets
-	test0 = socket('My name is A{name}.', 
-	               {'name': 'Brian J Rubinton'})
-	test1 = socket('I live at A{address}.', 
-	               {'address': '63 Thompson Street'})
-	test2 = socket('There is a good A{shop} near me.', 
-	               {'shop': 'cigar store'})
-
-#Create Tier 1 Node
-	testnode = node([test0, test1, test2])
-	
-#Create Tier 2 Sockets
-	test2a1 = socket('There is a good A{shop} near me. It is in fact my favorite A{shop} in the whole city!', 
-	                 {'shop': 'cigar store'})
-	test2a2 = socket('Its address is A{shop_address}.', 
-	                 {'shop_address': '82 West Broadway'})
-
-#Create Tier 2 Node
-	test2a = node([test2a1, test2a2])
-
-#Create Tier 3 Socket
-	test2a2a1 = socket('Its address is A{shop_address}, between A{cross_street_1} and A{cross_street_2}.', 
-	                   {'shop_address': '82 West Broadway',
-	                    'cross_street_1': 'Broome', 
-	                    'cross_street_2': 'Spring'})
-
-#Create Tier 3 Node
-	test2a2a = node([test2a2a1])
-
-#Link Tier 3 to Tier 2
-	test2a2.linkToNode(test2a2a)
-	
-#Link Tier 2 to Tier 1
-	test2.linkToNode(test2a)
-	
-	c = compiler()
-	print c.compile(testnode, False)
+class core_test(unittest.TestCase):
+    """Test core functionality excluding interface """
+    preamble_clause = socket('This is a purchase order for the A{frequency} delivery of socks.', {'frequency': 'monthly'})
+    print preamble_clause
+    preamble = node(preamble_clause)
+    print preamble
+    socks = document(preamble)
+    print socks
+    p = Printer()
+    p.export(socks)
 
 
 if __name__ == "__main__":
-	unittest.main()
+    unittest.main()
