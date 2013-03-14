@@ -34,7 +34,7 @@ class socket(object):
     def __str__(self):
         return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s' % (type(self), self.text, self.variables, self.linked_node)
     def __iter__(self):
-	return TraversalIterator()
+	return TraversalVisitor(self)
     def accept(self, visitor):
         visitor.visit_socket(self)
     def linkNode(self, new_node):
@@ -66,7 +66,7 @@ class node(object):
     def __str__(self):
 	return 'Component type: %s /nNumber of sockets: %s' % (type(self), self.sockets)
     def __iter__(self):
-	return TraversalVisitor()
+	return TraversalVisitor(self)
     def accept(self, visitor):
 	visitor.visit_node(self)
     
@@ -83,7 +83,7 @@ class document(object):
 	self.nodes = nodes
 	self.variables = variables
     def __iter__(self):
-	return TraversalVisitor()
+	return TraversalVisitor(self)
     def accept(self, visitor):
 	visitor.visit_document(self)
 
@@ -108,13 +108,12 @@ class Visitor(object):
 	pass
 
 class TraversalVisitor(Visitor):
+    """How does the client call .next()? There needs to be an external access method that routes the .next() call to the appropriate generator..."""
     def __init__(self, component):
 	self.next(component)
-    def next(self, component):
-	component.accept(self)
     def visit_socket(self, socket):
 	try: socket.linked_node.accept(self)
-	except StopIteration: yield socket
+	except: yield socket #does this work?
     def visit_node(self, node):
 	for x in node.sockets:
 	    yield x.accept(self)
@@ -206,18 +205,25 @@ class us_constitution_dynamic_test(unittest.TestCase):
     Compile into .pdf at each point.
     
     """
+class Socket_Test(unittest.TestCase):
+    """Try linking compatible and incompatible nodes. """
+class Document_Test(unittest.TestCase):
+    """Figure out the stale cache thing."""
+class Iterator_Test(unittest.TestCase):
+    socket1 = socket('I like breakfast A{food}', {'food': 'tacos'})
+    socket2 = socket('Especially with A{condiment}', {'condiment': 'salsa'})
+    socket3 = socket('...AND A{extra}', {'extra': 'bacon'})
+    node1 = node([socket1, socket2, socket3])
+    counter = 0
+    for x in node1:
+	counter += 1
+    assert counter == 3
 
-class core_test(unittest.TestCase):
-    """Test core functionality excluding interface """
-    preamble_clause = socket('This is a purchase order for the A{frequency} delivery of socks.', {'frequency': 'monthly'})
-    print preamble_clause
-    preamble = node(preamble_clause)
-    print preamble
-    socks = document(preamble)
-    print socks
-    p = Printer()
-    p.export(socks)
+class Constructor_Test(unitTest.TestCase):
+    """Construct a document."""
 
+class Printer_Test(unitTest.TestCase):
+    """Print a variety of component structures."""
 
 if __name__ == "__main__":
     unittest.main()
