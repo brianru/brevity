@@ -1,24 +1,10 @@
-"""Brevity 0.2
-
-Usage: 
-    brevity -h | --help
-    brevity new socket <text> <variables> <linkedNode>
-    brevity new node <sockets>
-    brevity new document <nodes> <instanceVariables>
-    brevity new
-    brevity -ls | --list
-
-Options:
-    -h | --help Show the help docstring.
-    -ls | --list Print cached (working) object list.
-
-"""
+"""Brevity 0.2"""
 
 import re, os, unittest
 
 ##### MODEL #####
 
-class socket(object):
+class Socket(object):
     """Lowest level structure.
     Contains:
         1) Uncompiled text (with variable placeholders)
@@ -54,7 +40,7 @@ class socket(object):
 	self.linked_node = new_node
 	return True
 
-class node(object):
+class Node(object):
     """Intermediary structure. Provides constraints.
     Contains:
         1) Sockets
@@ -71,7 +57,7 @@ class node(object):
     def accept(self, visitor):
 	visitor.visit_node(self)
     
-class document(object):
+class Document(object):
     """Top structure. Contains instance variables. Separates document components from particular document instance.
     Contains:
         1) Nodes
@@ -214,32 +200,47 @@ class us_constitution_dynamic_test(unittest.TestCase):
 class Socket_Test(unittest.TestCase):
     """Try linking compatible and incompatible nodes. """
     def runTest(self):
-    	socket1 = socket('I like breakfast A{item1}', {'item1': 'tacos'})
-    	socket2 = socket('Especially with A{condiment}', {'condiment': 'salsa'})
-    	socket3 = socket('...AND A{extra}', {'extra': 'bacon'})
-    	node1 = node([socket1, socket2, socket3])
-    	socket4 = socket('I like lots of different kinds of A{meal} food.', {'meal': 'breakfast'})
-	socket5 = socket('Items suchs as A{item1}, A{item2}, A{item3} are among my favorites.', {'item1': 'tacos', 'item2': 'omelettes', 'item3':'leftover pizza'})
-    	node2a = node([socket4]) #incompatible with socket1
-	node2b = node([socket4, socket5]) #compatible with socket1: see 'item1'
+    	socket1 = Socket('I like breakfast A{item1}', {'item1': 'tacos'})
+    	socket2 = Socket('Especially with A{condiment}', {'condiment': 'salsa'})
+    	socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
+    	node1 = Node([socket1, socket2, socket3])
+    	socket4 = Socket('I like lots of different kinds of A{meal} food.', {'meal': 'breakfast'})
+	socket5 = Socket('Items suchs as A{item1}, A{item2}, A{item3} are among my favorites.', {'item1': 'tacos', 'item2': 'omelettes', 'item3':'leftover pizza'})
+    	node2a = Node([socket4]) #incompatible with socket1
+	node2b = Node([socket4, socket5]) #compatible with socket1: see 'item1'
 	
 	self.assertFalse(socket1.link_node(node2a))
 	self.assertEqual(socket1.linked_node, None)
 	self.assertTrue(socket1.link_node(node2b))
     	self.assertEqual(socket1.linked_node, node2b)
 
+class Node_Test(unittest.TestCase):
+    """Create a node.
+    Determine how empty nodes should be handled.
+    Ensure sockets are stored appropriately.
+
+    """
+    def runTest(self):
+	socket1 = Socket('I like breakfast A{item1}', {'item1': 'tacos'})
+    	socket2 = Socket('Especially with A{condiment}', {'condiment': 'salsa'})
+    	socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
+    	node1 = Node([socket1, socket2, socket3])
+        
+	self.assertRaises(TypeError, lambda: Node())
+	self.assertEqual(node1.sockets, [socket1, socket2, socket3])
+
 class Document_Test(unittest.TestCase):
     """Figure out the stale cache thing."""
 
 class Iterator_Test(unittest.TestCase):
     def runTest(self):
-	socket1 = socket('I like breakfast A{food}', {'food': 'tacos'})
-        socket2 = socket('Especially with A{condiment}', {'condiment': 'salsa'})
-        socket3 = socket('...AND A{extra}', {'extra': 'bacon'})
-        node1 = node([socket1, socket2, socket3])
+	socket1 = Socket('I like breakfast A{food}', {'food': 'tacos'})
+        socket2 = Socket('Especially with A{condiment}', {'condiment': 'salsa'})
+        socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
+        node1 = Node([socket1, socket2, socket3])
         counter = 0
-	for x in node1:
-	    counter += 1
+	#for x in node1:
+	#    counter += 1
         self.assertEqual(counter, 3)
 
 class Visitor_Test(unittest.TestCase):
@@ -248,6 +249,7 @@ class Visitor_Test(unittest.TestCase):
     2) Component's accept() method calls correct visit_???() method on the visitor
 
     """
+
 class Constructor_Test(unittest.TestCase):
     """Construct a document."""
 
