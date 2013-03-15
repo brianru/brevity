@@ -37,7 +37,7 @@ class socket(object):
 	return TraversalVisitor(self)
     def accept(self, visitor):
         visitor.visit_socket(self)
-    def linkNode(self, new_node):
+    def link_node(self, new_node):
 	"""Attempts to update the linked node.
 	Does not raise an exception if this is replacing an existing linked node.
 	Raises exception if the node is incompatible.
@@ -45,13 +45,14 @@ class socket(object):
 	"""	    
 	node_vars = []
 	for x in new_node.sockets:
-	    node_vars.append(x.variables.keys())
+	    node_vars.extend(x.variables.keys())
 	#build separate method in socket to perform below comparison
 	#if new_node >= self
-	if self.variables.issubset(node_vars): 
-	    linked_node = new_node
-	    return True
-        return False
+	for y in self.variables.keys():
+	    if y not in node_vars:
+		return False
+	self.linked_node = new_node
+	return True
 
 class node(object):
     """Intermediary structure. Provides constraints.
@@ -108,9 +109,14 @@ class Visitor(object):
 	pass
 
 class TraversalVisitor(Visitor):
-    """How does the client call .next()? There needs to be an external access method that routes the .next() call to the appropriate generator..."""
+    """How does the client call .next()? 
+    There needs to be an external access method that routes the .next() call to the appropriate generator.
+    
+    """
     def __init__(self, component):
-	self.next(component)
+	self.placeholder = component
+    def next(self):
+	return self.placeholder.accept(self)
     def visit_socket(self, socket):
 	try: socket.linked_node.accept(self)
 	except: yield socket #does this work?
@@ -207,22 +213,45 @@ class us_constitution_dynamic_test(unittest.TestCase):
     """
 class Socket_Test(unittest.TestCase):
     """Try linking compatible and incompatible nodes. """
+    def runTest(self):
+    	socket1 = socket('I like breakfast A{item1}', {'item1': 'tacos'})
+    	socket2 = socket('Especially with A{condiment}', {'condiment': 'salsa'})
+    	socket3 = socket('...AND A{extra}', {'extra': 'bacon'})
+    	node1 = node([socket1, socket2, socket3])
+    	socket4 = socket('I like lots of different kinds of A{meal} food.', {'meal': 'breakfast'})
+	socket5 = socket('Items suchs as A{item1}, A{item2}, A{item3} are among my favorites.', {'item1': 'tacos', 'item2': 'omelettes', 'item3':'leftover pizza'})
+    	node2a = node([socket4]) #incompatible with socket1
+	node2b = node([socket4, socket5]) #compatible with socket1: see 'item1'
+	
+	self.assertFalse(socket1.link_node(node2a))
+	self.assertEqual(socket1.linked_node, None)
+	self.assertTrue(socket1.link_node(node2b))
+    	self.assertEqual(socket1.linked_node, node2b)
+
 class Document_Test(unittest.TestCase):
     """Figure out the stale cache thing."""
-class Iterator_Test(unittest.TestCase):
-    socket1 = socket('I like breakfast A{food}', {'food': 'tacos'})
-    socket2 = socket('Especially with A{condiment}', {'condiment': 'salsa'})
-    socket3 = socket('...AND A{extra}', {'extra': 'bacon'})
-    node1 = node([socket1, socket2, socket3])
-    counter = 0
-    for x in node1:
-	counter += 1
-    assert counter == 3
 
-class Constructor_Test(unitTest.TestCase):
+class Iterator_Test(unittest.TestCase):
+    def runTest(self):
+	socket1 = socket('I like breakfast A{food}', {'food': 'tacos'})
+        socket2 = socket('Especially with A{condiment}', {'condiment': 'salsa'})
+        socket3 = socket('...AND A{extra}', {'extra': 'bacon'})
+        node1 = node([socket1, socket2, socket3])
+        counter = 0
+	for x in node1:
+	    counter += 1
+        self.assertEqual(counter, 3)
+
+class Visitor_Test(unittest.TestCase):
+    """Create a visitor subclass and assert the following on every type of component object:
+    1) Component has an accept() method
+    2) Component's accept() method calls correct visit_???() method on the visitor
+
+    """
+class Constructor_Test(unittest.TestCase):
     """Construct a document."""
 
-class Printer_Test(unitTest.TestCase):
+class Printer_Test(unittest.TestCase):
     """Print a variety of component structures."""
 
 if __name__ == "__main__":
