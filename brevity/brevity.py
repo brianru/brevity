@@ -62,8 +62,6 @@ class Document(object):
     Contains:
         1) Nodes
 	2) Instance variables
-	3) Cached array of full variable set
-	4) Cached compiled document.
     
     """
     def __init__(self, nodes, variables = dict()):
@@ -73,13 +71,6 @@ class Document(object):
 	return TraversalVisitor(self)
     def accept(self, visitor):
 	visitor.visit_document(self)
-
-    cached_compile = None
-    cached_vars = None
-
-    def stale_cache(self, fresh_compile = None, fresh_vars = None):
-	if fresh_compile: cached_compile = fresh_compile
-	if fresh_vars: cached_vars = fresh_vars
 
 ##### CONTROLLER #####
 
@@ -205,7 +196,8 @@ class Socket_Test(unittest.TestCase):
     	socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
     	node1 = Node([socket1, socket2, socket3])
     	socket4 = Socket('I like lots of different kinds of A{meal} food.', {'meal': 'breakfast'})
-	socket5 = Socket('Items suchs as A{item1}, A{item2}, A{item3} are among my favorites.', {'item1': 'tacos', 'item2': 'omelettes', 'item3':'leftover pizza'})
+	socket5 = Socket('Items suchs as A{item1}, A{item2}, A{item3} are among my favorites.', \
+			 {'item1': 'tacos', 'item2': 'omelettes', 'item3':'leftover pizza'})
     	node2a = Node([socket4]) #incompatible with socket1
 	node2b = Node([socket4, socket5]) #compatible with socket1: see 'item1'
 	
@@ -231,6 +223,18 @@ class Node_Test(unittest.TestCase):
 
 class Document_Test(unittest.TestCase):
     """Figure out the stale cache thing."""
+    def runTest(self):
+	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
+    	socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
+    	socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
+    	node1 = Node([socket1, socket2, socket3])
+	socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
+        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
+	node2 = Node([socket4, socket5])
+	document1 = Document([node1, node2])
+
+	self.assertRaises(TypeError, lambda: Document())
+	self.assertEqual(document1.nodes, [node1, node2])
 
 class Iterator_Test(unittest.TestCase):
     def runTest(self):
