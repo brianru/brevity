@@ -1,6 +1,6 @@
 """Brevity 0.2"""
 
-import re, os, unittest
+import re, os, unittest, pdb
 
 ##### MODEL #####
 
@@ -19,8 +19,6 @@ class Socket(object):
 
     def __str__(self):
         return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s' % (type(self), self.text, self.variables, self.linked_node)
-    def __iter__(self):
-	return TraversalVisitor(self)
     def accept(self, visitor):
         visitor.visit_socket(self)
     def link_node(self, new_node):
@@ -52,8 +50,6 @@ class Node(object):
 	#raise exception if 1) sockets does not contain only sockets or 2) sockets is empty
     def __str__(self):
 	return 'Component type: %s /nNumber of sockets: %s' % (type(self), self.sockets)
-    def __iter__(self):
-	return TraversalVisitor(self)
     def accept(self, visitor):
 	visitor.visit_node(self)
     
@@ -64,11 +60,10 @@ class Document(object):
 	2) Instance variables
     
     """
+    nodes = []
     def __init__(self, nodes, variables = dict()):
 	self.nodes = nodes
 	self.variables = variables
-    def __iter__(self):
-	return TraversalVisitor(self)
     def accept(self, visitor):
 	visitor.visit_document(self)
 
@@ -76,8 +71,6 @@ class Document(object):
 
 class Visitor(object):
     "Abstract class. Defines interface for visitor classes."""
-    def __init__(self):
-	pass
     def visit_socket(self, socket):
 	pass
     def visit_node(self, node):
@@ -86,23 +79,27 @@ class Visitor(object):
 	pass
 
 class TraversalVisitor(Visitor):
-    """How does the client call .next()? 
-    There needs to be an external access method that routes the .next() call to the appropriate generator.
-    
-    """
-    def __init__(self, component):
-	self.placeholder = component
-    def next(self):
-	return self.placeholder.accept(self)
-    def visit_socket(self, socket):
-	try: socket.linked_node.accept(self)
-	except: yield socket #does this work?
-    def visit_node(self, node):
-	for x in node.sockets:
-	    yield x.accept(self)
+    def get_generator(self, component):
+        return component.accept(self)
     def visit_document(self, document):
-	for x in document.nodes:
-            yield x.accept(self)
+	return doc_gen(document)
+    def visit_node(self, node):
+	return node_gen(node)
+    def visit_socket(self, socket):
+        return sock_gen(socket)
+#re-encapsulate generators in TraversalVisitor if possible
+def doc_gen(doc):
+    yield doc
+    for x in doc.nodes:
+        yield node_gen(x)
+def node_gen(node):
+    yield node
+    for y in node.sockets:
+	yield sock_gen(y)
+def sock_gen(socket):
+    yield socket
+    if socket.linked_node:
+	yield node_gen(socket.linked_node)
 
 class ConstructionDirectorVisitor(Visitor):
     """Directs construction of any document component. Visits components to route proper actions."""
@@ -117,7 +114,7 @@ class ConstructionDirectorVisitor(Visitor):
         return self.builder.raw_text, self.builder.variables
     def visit_socket(self, socket):
 	if socket.linked_node:
-	    self.iter.next(socket)
+	    self.iter.next()
 	else:
             self.builder.build_socket(socket)
     def visit_node(self, node):
@@ -243,9 +240,12 @@ class Iterator_Test(unittest.TestCase):
         socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
         node1 = Node([socket1, socket2, socket3])
         counter = 0
-	#for x in node1:
-	#    counter += 1
-        self.assertEqual(counter, 3)
+	pdb.set_trace()
+	t = TraversalVisitor()
+	gen = t.get_generator(node1)
+	for x in gen:
+	    counter += 1
+        self.assertEqual(counter, 4)
 
 class Visitor_Test(unittest.TestCase):
     """Create a visitor subclass and assert the following on every type of component object:
