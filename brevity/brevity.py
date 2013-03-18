@@ -78,16 +78,19 @@ class Visitor(object):
     def visit_document(self, document):
 	pass
 
-class TraversalVisitor(Visitor):
-    def get_generator(self, component):
-        return component.accept(self)
-    def visit_document(self, document):
-	return doc_gen(document)
-    def visit_node(self, node):
-	return node_gen(node)
-    def visit_socket(self, socket):
-        return sock_gen(socket)
-#re-encapsulate generators in TraversalVisitor if possible
+#Visitor pattern not supported for generator functions until python 3.3.
+#See PEP 382
+#class TraversalVisitor(Visitor):
+#    def get_generator(self, component):
+#       return component.accept(self)
+#    def visit_document(self, document):
+#	return doc_gen(document)
+#    def visit_node(self, node):
+#	return node_gen(node)
+#    def visit_socket(self, socket):
+#       return sock_gen(socket)
+
+## GENERATORS ##
 def doc_gen(doc):
     yield doc
     for x in doc.nodes:
@@ -234,18 +237,20 @@ class Document_Test(unittest.TestCase):
 	self.assertEqual(document1.nodes, [node1, node2])
 
 class Iterator_Test(unittest.TestCase):
+    """Build multi-tier document.
+    Iterate over full document as well as sub-structures.
+
+    """
     def runTest(self):
 	socket1 = Socket('I like breakfast A{food}', {'food': 'tacos'})
         socket2 = Socket('Especially with A{condiment}', {'condiment': 'salsa'})
         socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
         node1 = Node([socket1, socket2, socket3])
         counter = 0
-	pdb.set_trace()
-	t = TraversalVisitor()
-	gen = t.get_generator(node1)
+	gen = node_gen(node1)
 	for x in gen:
 	    counter += 1
-        self.assertEqual(counter, 4)
+        self.assertEqual(counter, 4) #ensure iterator passes over every object in the substructure exactly once
 
 class Visitor_Test(unittest.TestCase):
     """Create a visitor subclass and assert the following on every type of component object:
