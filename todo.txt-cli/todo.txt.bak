@@ -3,15 +3,12 @@
 (D) add caching and stalecache notifier to document +brevity
 (A) implement printer +brevity
 (C) build us constitution unit test +brevity
-(A) fix the iterator +brevity
 (B) separate brevity.py into multifile module +brevity
 (C) flesh out README.md +brevity
 (B) test iterator +brevity
 (B) test constructor +brevity
 (B) test builder +brevity
-(A) research debug mode py decorator +brevity
-(B) test Document +brevity
-(C) build Amendment document type +brevity
 (C) build Agreement component +brevity
 (B) code + test FizzBuzz +hs
-draft application answers +hs
+(A) draft application answers +hs
+(C) build Amendment document type +brevity

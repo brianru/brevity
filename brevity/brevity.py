@@ -79,7 +79,8 @@ class Visitor(object):
 	pass
 
 #Visitor pattern not supported for generator functions until python 3.3.
-#See PEP 382
+#See PEP 380
+### Client classes must select correct generator (must know the structure entry-point's type).
 #class TraversalVisitor(Visitor):
 #    def get_generator(self, component):
 #       return component.accept(self)
@@ -105,14 +106,19 @@ def sock_gen(socket):
 	yield node_gen(socket.linked_node)
 
 class ConstructionDirectorVisitor(Visitor):
-    """Directs construction of any document component. Visits components to route proper actions."""
+    """Directs construction of any document component. Visits components to route proper actions.
+    
+    Refactor-out iterator code. 
+    Flow should be driven by a loop containing iter.next().accept(self). 
+    Appropriate visit_??? methods then called and information routed to the builder class.
+    
+    """
     def __init__(self):
 	"""Is there anything to do here?"""
 	self.builder = ConstructionBuilder()
     def construct(self, component):
 	"""Return cumulative active text and variables of component incl. all sub-components."""
-	#reset constructor, builder and iterator
-	self.iter = TraversalVisitor(component)
+	#iterate through component's substructure
 	component.accept(self)
         return self.builder.raw_text, self.builder.variables
     def visit_socket(self, socket):
@@ -128,8 +134,6 @@ class ConstructionDirectorVisitor(Visitor):
 
 class Builder(object):
     "Abstract class. Defines interface for builder classes."""
-    def __init__(self):
-	pass
     def build_socket(self, socket):
 	pass
     def build_node(self, node):
@@ -160,6 +164,7 @@ class Compiler(object):
     def compile(self, component):
 	constructor = ConstructionDirectorVisitor()
 	raw_text, variables = constructor.construct(component)
+	#Revisit regex
 	compiled_text = re.sub(r'A{\w.*?)}', variables["\1"], raw_text)
 
 class Printer(Visitor):
@@ -172,6 +177,8 @@ class Printer(Visitor):
 	raw_text, variables = constructor.construct(component)
 	print raw_text
 	print variables
+	
+###### UNIT TESTS ######
 
 class us_constitution_static_test(unittest.TestCase):
     """Import US constitution (cumulative of all amendments) from a prepared .brvty file.
@@ -242,15 +249,38 @@ class Iterator_Test(unittest.TestCase):
 
     """
     def runTest(self):
-	socket1 = Socket('I like breakfast A{food}', {'food': 'tacos'})
-        socket2 = Socket('Especially with A{condiment}', {'condiment': 'salsa'})
-        socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
-        node1 = Node([socket1, socket2, socket3])
-        counter = 0
-	gen = node_gen(node1)
-	for x in gen:
+	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
+    	socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
+    	socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
+    	node1 = Node([socket1, socket2, socket3])
+	socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
+        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
+	node2 = Node([socket4, socket5])
+	document1 = Document([node1, node2])
+        
+	#Node with sockets (not linked)
+	counter = 0
+	ng = node_gen(node1)
+	for x in ng:
 	    counter += 1
         self.assertEqual(counter, 4) #ensure iterator passes over every object in the substructure exactly once
+	
+	#Node with sockets (linked)
+	
+	#Node without sockets
+	
+	#Document with nodes
+	counter = 0
+        dg = doc_gen(document1)
+	for x in dg:
+	    counter += 1
+	self.assertEqual(counter, 8)
+	#Document without nodes
+
+        #Socket with linked node
+	counter = 0
+        #Socket without linked node
+
 
 class Visitor_Test(unittest.TestCase):
     """Create a visitor subclass and assert the following on every type of component object:
