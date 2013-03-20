@@ -11,10 +11,22 @@ class us_constitution_static_test(unittest.TestCase):
     def runTest(self):
 	testxml = etree.parse('samples/constitution.xml')
 	im = XMLImporter()
-	constitution = im.import(testxml)
-    #export to xml file and compare to original xml file (roundtrip it!)
-    #print to tex file and compare to tex file from github
-    #compile tex file into txt, html, pdf (comparing to manually prepared versions)
+	constitution = im.import_xml(testxml)
+
+	with open('constitution_test.xml', mode = 'w', encoding = 'utf-8') as result_xml:
+	    ex = XMLExporter()
+	    result_xml.write(ex.export_xml(constitution))
+	self.assertEqual(etree.parse('samples/constitution.xml'), etree.parse('constitution_text.xml'))
+
+	p = Printer()
+	const_tex = p.print_to_tex(constitution, 'tex', 'tests/constitution_test.tex')
+	self.assertEqual('samples/constitution.tex', const_tex)
+
+	c = Compiler()
+	compiled_constitution = c.compile(constitution)
+	self.assertEqual(p.print_to_txt(compiled_consititution), 'samples/constitution.txt')
+	self.assertEqual(p.print_to_html(compiled_constitution), 'samples/constitution.html')
+	self.assertEqual(p.print_to_pdf(compiled_constitution), 'samples/constitution.pdf')
 
 class us_constitution_dynamic_test(unittest.TestCase):
     """Import US constitution and each amendment independently from a set of prepared .brvty files.
@@ -23,6 +35,7 @@ class us_constitution_dynamic_test(unittest.TestCase):
     Compile into .pdf at each point.
     
     """
+
 class Socket_Test(unittest.TestCase):
     """Try linking compatible and incompatible nodes. """
     def runTest(self):
@@ -79,7 +92,7 @@ class Iterator_Test(unittest.TestCase):
     def runTest(self):
 	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
     	socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
-    	socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
+    	socket3 = Socket('...AND A{extra1}!', {'extra1': 'bacon'})
     	node1 = Node([socket1, socket2, socket3])
 	socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
         socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
@@ -87,28 +100,42 @@ class Iterator_Test(unittest.TestCase):
 	document1 = Document([node1, node2])
         
 	#Node with sockets (not linked)
-	counter = 0
+        counter = 0
 	ng = node_gen(node1)
 	for x in ng:
 	    counter += 1
         self.assertEqual(counter, 4) #ensure iterator passes over every object in the substructure exactly once
 	
 	#Node with sockets (linked)
-	
-	#Node without sockets
-	
+	socket6 = Socket('...AND A{extra1}, A{extra2} and A{extra3}!', {'extra1': 'bacon', 'extra2': 'eggs', 'extra3': 'cheese'})
+	node3 = Node([socket6])
+        socket3.link_node(node3)
+        counter = 0
+	ng = node_gen(node1)
+	for x in ng:
+	    counter += 1
+	self.assertEqual(counter, 6)
+
 	#Document with nodes
 	counter = 0
         dg = doc_gen(document1)
 	for x in dg:
 	    counter += 1
-	self.assertEqual(counter, 8)
-	#Document without nodes
-
-        #Socket with linked node
+	self.assertEqual(counter, 10)
+	
+	#Socket with linked node
 	counter = 0
-        #Socket without linked node
-
+        sg = sock_gen(socket3)
+	for x in sg:
+	    counter += 1
+	self.assertEqual(counter, 3)
+	
+	#Socket without linked node
+        counter = 0
+	sg = sock_gen(socket5)
+	for x in sg:
+	    counter += 1
+	self.assertEqual(counter, 1)
 
 class Visitor_Test(unittest.TestCase):
     """Create a visitor subclass and assert the following on every type of component object:
@@ -122,6 +149,13 @@ class Constructor_Test(unittest.TestCase):
 
 class Printer_Test(unittest.TestCase):
     """Print a variety of component structures."""
+#    p = Printer()
+#
+#    p.print_to_txt()
+#    p.print_to_html()
+#    p.print_to_tex()
+#    p.print_to_pdf()
+
 
 if __name__ == "__main__":
     unittest.main()

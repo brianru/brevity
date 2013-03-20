@@ -52,7 +52,7 @@ class Node(object):
 	return 'Component type: %s /nNumber of sockets: %s' % (type(self), self.sockets)
     def accept(self, visitor):
 	visitor.visit_node(self)
-    
+
 class Document(object):
     """Top structure. Contains instance variables. Separates document components from particular document instance.
     Contains:
