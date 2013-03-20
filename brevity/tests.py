@@ -12,12 +12,12 @@ class us_constitution_static_test(unittest.TestCase):
     """
     def runTest(self):
 	testxml = etree.parse('samples/constitution.xml')
-	im = XMLImporter()
-	constitution = im.import_xml(testxml)
+#	im = XMLImporter()
+#	constitution = im.import_xml(testxml)
 
-	with open('constitution_test.xml', mode = 'w', encoding = 'utf-8') as result_xml:
-	    ex = XMLExporter()
-	    result_xml.write(ex.export_xml(constitution))
+#	with open('constitution_test.xml', mode = 'w', encoding = 'utf-8') as result_xml:
+#	    ex = XMLExporter()
+#	    result_xml.write(ex.export_xml(constitution))
 	self.assertEqual(etree.parse('samples/constitution.xml'), etree.parse('constitution_text.xml'))
 
 	p = Printer()
@@ -92,6 +92,7 @@ class Iterator_Test(unittest.TestCase):
 
     """
     def runTest(self):
+	t = TraversalVisitor()
 	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
     	socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
     	socket3 = Socket('...AND A{extra1}!', {'extra1': 'bacon'})
@@ -103,7 +104,7 @@ class Iterator_Test(unittest.TestCase):
         
 	#Node with sockets (not linked)
         counter = 0
-	ng = node_gen(node1)
+	ng = t.get_generator(node1)
 	for x in ng:
 	    counter += 1
         self.assertEqual(counter, 4) #ensure iterator passes over every object in the substructure exactly once
@@ -112,29 +113,31 @@ class Iterator_Test(unittest.TestCase):
 	socket6 = Socket('...AND A{extra1}, A{extra2} and A{extra3}!', {'extra1': 'bacon', 'extra2': 'eggs', 'extra3': 'cheese'})
 	node3 = Node([socket6])
         socket3.link_node(node3)
+	self.assertEqual(socket3.linked_node, node3)
         counter = 0
-	ng = node_gen(node1)
+	ng = t.get_generator(node1)
+	#pdb.set_trace()
 	for x in ng:
 	    counter += 1
 	self.assertEqual(counter, 6)
 
 	#Document with nodes
 	counter = 0
-        dg = doc_gen(document1)
+        dg = t.get_generator(document1)
 	for x in dg:
 	    counter += 1
 	self.assertEqual(counter, 10)
 	
 	#Socket with linked node
 	counter = 0
-        sg = sock_gen(socket3)
+        sg = t.get_generator(socket3)
 	for x in sg:
 	    counter += 1
 	self.assertEqual(counter, 3)
 	
 	#Socket without linked node
         counter = 0
-	sg = sock_gen(socket5)
+	sg = t.get_generator(socket5)
 	for x in sg:
 	    counter += 1
 	self.assertEqual(counter, 1)

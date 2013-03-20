@@ -87,23 +87,26 @@ class TraversalVisitor(Visitor):
     def visit_document(self, document): #does not return generator directly per PEP 380
 	self.generator = doc_gen(document)
     def visit_node(self, node):
-	self.generator =  node_gen(node)
+	self.generator = node_gen(node)
     def visit_socket(self, socket):
         self.generator = sock_gen(socket)
     
     ## GENERATORS ##
-    def doc_gen(doc):
-        yield doc
-        for x in doc.nodes:
-            yield node_gen(x)
-    def node_gen(node):
-        yield node
-        for y in node.sockets:
-	    yield sock_gen(y)
-    def sock_gen(socket):
-        yield socket
-        if socket.linked_node:
-    	    yield node_gen(socket.linked_node)
+def doc_gen(doc):
+    yield doc
+    for x in doc.nodes:
+	for y in node_gen(x):
+	    yield y
+def node_gen(node):
+    yield node
+    for y in node.sockets:
+	for z in sock_gen(y):
+	    yield z
+def sock_gen(socket):
+    yield socket
+    if socket.linked_node is not None:
+	for x in node_gen(socket.linked_node):
+            yield x
 
 class ConstructionDirectorVisitor(Visitor):
     """Directs construction of any document component. Visits components to route proper actions.
