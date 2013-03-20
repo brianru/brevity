@@ -1,6 +1,6 @@
 """Brevity 0.2"""
 
-import re, os, unittest, pdb, xml.etree.ElementTree as etree
+import re, os, unittest, pdb, xml.etree.ElementTree as etree, tests
 
 ##### DATA MODEL #####
 
@@ -216,4 +216,3 @@ class Reader(object):
             a = node_factory(x)
 	    socketname.linked_node = a #refactor to use link_node method, raise exception if incompatible
         return socketname
-

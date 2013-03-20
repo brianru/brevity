@@ -1,3 +1,5 @@
+import re, os, pdb, unittest, xml.etree.ElementTree as etree
+from application import *
 ###### UNIT TESTS ######
 
 class us_constitution_static_test(unittest.TestCase):
@@ -154,8 +156,6 @@ class Printer_Test(unittest.TestCase):
 #    p.print_to_txt()
 #    p.print_to_html()
 #    p.print_to_tex()
-#    p.print_to_pdf()
-
 
 if __name__ == "__main__":
     unittest.main()
