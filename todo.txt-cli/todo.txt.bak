@@ -1,17 +1,14 @@
 (E) create object library db +brevity
 (D) write HELP docstring +brevity
-
-(A) build us constitution unit test +brevity
-(B) separate brevity.py into multifile module +brevity
+(B) build us constitution unit test +brevity
+x 2013-03-20 separate brevity.py into multifile module +brevity
 (C) flesh out README.md +brevity
-(B) test constructor +brevity
-(B) test builder +brevity
+(A) test constructor +brevity
+(A) test builder +brevity
 (C) build Agreement component +brevity
 (C) code + test FizzBuzz +hs
 (C) draft application answers +hs
 (C) build Amendment document type +brevity
 (B) refactor XMLImporter using existing design patterns +brevity
-(A) implement XMLImporter +brevity
-(A) refactor iterator test now that iterator implements Visitor pattern +brevity
 implement reader/writer methods +brevity
 implement reader/writer unit tests +brevity

@@ -149,8 +149,65 @@ class Visitor_Test(unittest.TestCase):
 
     """
 
-class Constructor_Test(unittest.TestCase):
+class Builder_Test(unittest.TestCase):
+	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
+    socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
+    socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
+    node1 = Node([socket1, socket2, socket3])
+	socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
+    socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
+	node2 = Node([socket4, socket5])
+	document1 = Document([node1, node2], {'item1': 'huevos rancheros'})
+
+    a = ConstructionBuilder()
+    a.build_document(document1)
+    self.assertEqual(b.variables, document.variables)
+    b = ConstructionBuilder()
+    b.build_node(node1)
+    c = ConstructionBulder()
+    self.assertEqual(b.variables, c.variables)
+    self.assertEqual(b.raw_tex, c.raw_text)
+    
+    d = ConstructionBuilder()
+    d.build_socket(socket5)
+    socket6 = Socket('The best breakfast A{item2} are at A{location1} in A{location1spec}.', {'location1': 'Pizza Hut', 'location1spec': 'Westbury, New York'})
+    node3 = Node([socket6])
+    socket5.link_node(node3)
+    e = ConstructionBuilder()
+    e.build_socket(socket5)
+    self.assertEqual(d.variables, e.variables)
+    self.assertEqual(d.raw_text, e.raw_text)
+    
+
+class ConstructionDirectorVisitor_Test(unittest.TestCase):
     """Construct a document."""
+	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
+    socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
+    socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
+    node1 = Node([socket1, socket2, socket3])
+	socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
+    socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
+	node2 = Node([socket4, socket5])
+	document1 = Document([node1, node2], {'item1': 'huevos rancheros'})
+	
+	a = ConstructionDirectorVisitor()
+	test_text, test_vars = a.construct(socket1)
+	self.assertEqual(test_text, socket1.text)
+	self.assertEqual(test_vars, socket1.variables)
+	
+	b = ConstructionDirectorVisitor()
+	test_text, test_vars = b.construct(node2)
+	text_node2 = socket4.text + '\n' + socket5.text
+	vars_node2 = socket4.variables.extend(socket5.variables)
+	self.assertEqual(test_text, text_node2)
+	self.assertEqual(test_vars, vars_node2)
+	
+	c = ConstructionDirectorVisitor()
+	test_text, test_vars = c.construct(document1)
+    text_doc1 = socket1.text + socket2.text + socket3.text + socket4.text + socket5.text
+    vars_doc1 = {'item1': 'huevos rancheros', 'condiment': 'salsa', 'item2': 'pizzas', 'location1': 'Pizza Hut'}
+    self.assertEqual(test_text, text_doc1)
+    self.assertEqual(test_vars, vars_doc1)
 
 class Printer_Test(unittest.TestCase):
     """Print a variety of component structures."""
