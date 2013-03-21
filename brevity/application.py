@@ -148,7 +148,7 @@ class ConstructionBuilder(Builder):
 	self.raw_text = ''
 	self.variables = dict()
     def build_socket(self, socket):
-        self.raw_text.append(socket.text)
+        self.raw_text += socket.text
 	#add dictionary components only if names are not already there
     def build_node(self, node):
 	pass

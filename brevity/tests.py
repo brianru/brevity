@@ -162,7 +162,7 @@ class Builder_Test(unittest.TestCase):
 
         a = ConstructionBuilder()
         a.build_document(document1)
-        self.assertEqual(b.variables, document.variables)
+        self.assertEqual(a.variables, document1.variables)
         b = ConstructionBuilder()
         b.build_node(node1)
         c = ConstructionBulder()
