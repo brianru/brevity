@@ -219,3 +219,33 @@ class Reader(object):
             a = node_factory(x)
 	    socketname.linked_node = a #refactor to use link_node method, raise exception if incompatible
         return socketname
+
+class WriterDirectorVisitor(Visitor):
+    def write_to_xml(self, component):
+        t = TraversalVisitor()
+	gen = t.get_generator(component)
+	b = WriterBuilder()
+	for x in gen:
+	    x.accept(self)
+	#return etree object and file path
+    def visit_document(self, document):
+	b.build_document(document)
+    def visit_node(self, node):
+	b.build_node(node)
+    def visit_socket(self, socket):
+	b.build_socket(socket)
+
+class WriterBuilder(Builder):
+    def build_xml(self):
+        self.stack = []
+        #instantiate etree
+    def build_document(self, document):
+	self.stack.append(document)
+
+    def build_node(self, node):
+	self.stack.append(node)
+
+    def build_socket(self, socket):
+	if socket.linked_node is not None:
+            self.stack.append(socket)
+	    

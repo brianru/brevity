@@ -2,7 +2,7 @@ import re, os, pdb, unittest, xml.etree.ElementTree as etree
 from application import *
 ###### UNIT TESTS ######
 
-class us_constitution_static_test(unittest.TestCase):
+class USConstitutionStaticTestCase(unittest.TestCase):
     """Import US constitution from a prepared .xml file.
     Build .tex file and compare to original .tex file.
     Compile into .txt.
@@ -30,7 +30,7 @@ class us_constitution_static_test(unittest.TestCase):
 	self.assertEqual(p.print_to_html(compiled_constitution), 'samples/constitution.html')
 	self.assertEqual(p.print_to_pdf(compiled_constitution), 'samples/constitution.pdf')
 
-class us_constitution_dynamic_test(unittest.TestCase):
+class USConstitutionDynamicTestCase(unittest.TestCase):
     """Import US constitution and each amendment independently from a set of prepared .brvty files.
     Build .tex file for each 50 year slice.
     Compile each into .txt and compare to existing .txt file.
@@ -38,7 +38,7 @@ class us_constitution_dynamic_test(unittest.TestCase):
     
     """
 
-class Socket_Test(unittest.TestCase):
+class SocketTestCase(unittest.TestCase):
     """Try linking compatible and incompatible nodes. """
     def runTest(self):
     	socket1 = Socket('I like breakfast A{item1}', {'item1': 'tacos'})
@@ -56,7 +56,7 @@ class Socket_Test(unittest.TestCase):
 	self.assertTrue(socket1.link_node(node2b))
     	self.assertEqual(socket1.linked_node, node2b)
 
-class Node_Test(unittest.TestCase):
+class NodeTestCase(unittest.TestCase):
     """Create a node.
     Determine how empty nodes should be handled.
     Ensure sockets are stored appropriately.
@@ -71,7 +71,7 @@ class Node_Test(unittest.TestCase):
 	self.assertRaises(TypeError, lambda: Node())
 	self.assertEqual(node1.sockets, [socket1, socket2, socket3])
 
-class Document_Test(unittest.TestCase):
+class DocumentTestCase(unittest.TestCase):
     """Figure out the stale cache thing."""
     def runTest(self):
 	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
@@ -86,7 +86,7 @@ class Document_Test(unittest.TestCase):
 	self.assertRaises(TypeError, lambda: Document())
 	self.assertEqual(document1.nodes, [node1, node2])
 
-class Iterator_Test(unittest.TestCase):
+class IteratorTestCase(unittest.TestCase):
     """Build multi-tier document.
     Iterate over full document as well as sub-structures.
 
@@ -142,14 +142,14 @@ class Iterator_Test(unittest.TestCase):
 	    counter += 1
 	self.assertEqual(counter, 1)
 
-class Visitor_Test(unittest.TestCase):
+class VisitorTestCase(unittest.TestCase):
     """Create a visitor subclass and assert the following on every type of component object:
     1) Component has an accept() method
     2) Component's accept() method calls correct visit_???() method on the visitor
 
     """
 
-class Builder_Test(unittest.TestCase):
+class BuilderTestCase(unittest.TestCase):
     def runTest(self):
         socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
         socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
@@ -180,7 +180,7 @@ class Builder_Test(unittest.TestCase):
         self.assertEqual(d.variables, e.variables)
         self.assertEqual(d.raw_text, e.raw_text)
 
-class ConstructionDirectorVisitor_Test(unittest.TestCase):
+class ConstructionDirectorVisitorTestCase(unittest.TestCase):
     """Construct a document."""
     def runTest(self):
 	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
@@ -211,7 +211,13 @@ class ConstructionDirectorVisitor_Test(unittest.TestCase):
         self.assertEqual(test_text, text_doc1)
         self.assertEqual(test_vars, vars_doc1)
 
-class Printer_Test(unittest.TestCase):
+class WriterBuilderTestCase(unittest.TestCase):
+    pass
+
+class WriterDirectorVisitorTestCase(unittest.TestCase):
+    pass
+
+class PrinterTestCase(unittest.TestCase):
     """Print a variety of component structures."""
 #    p = Printer()
 #
