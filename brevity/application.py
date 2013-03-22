@@ -121,7 +121,7 @@ class ConstructionDirectorVisitor(Visitor):
 	    x.accept(self)
         return self.builder.raw_text, self.builder.variables
     def visit_socket(self, socket):
-	if socket.linked_node: #refactor to see if there is NO linked node, else pass
+	if socket.linked_node is not None: #refactor to see if there is NO linked node, else pass
 	    pass
 	else:
             self.builder.build_socket(socket)
@@ -149,11 +149,13 @@ class ConstructionBuilder(Builder):
 	self.variables = dict()
     def build_socket(self, socket):
         self.raw_text += socket.text
-	#add dictionary components only if names are not already there
+	for x in socket.variables:
+	    if x not in self.variables:
+		self.variables.update({x: socket.variables[x]})
     def build_node(self, node):
 	pass
     def build_document(self, document):
-	variables = document.variables
+	self.variables = document.variables
 
 class Compiler(object):
     """Constructs component structure then inserts variable values into text."""
@@ -184,7 +186,6 @@ class Writer(Visitor):
 	print variables
 	
 class Reader(object):
-    """Implement STRATEGY pattern to enable reading different filetypes."""
     def read_from_xml(self, xml_file):
         """Imports specified xml document.
         Supply xml document as a filepath string.
@@ -192,14 +193,16 @@ class Reader(object):
         """
         self.xml = etree.parse(xml_file)
         self.root = self.xml.getroot()
-        if root.attrib['name'] == 'document':
+        #is there any way to implement a Visitor class based on the element attributes?
+        #maybe something I can subclass? or some weird hack of dunder methods?
+	if root.attrib['name'] == 'document':
             return self.doc_factory(root)
         elif root.attib['name'] == 'node':
             return self.node_factory(root)
         elif root.attrib['name'] == 'socket':
             return self.socket_factory(root)
         else:
-            raise 
+	    raise #a more specific exception than this
         
     def doc_factory(self, doc):
         #create doc using name specified in doc.attrib['name'] ('docname')
@@ -212,7 +215,6 @@ class Reader(object):
         for x in node.children:
             a = socket_factory(x)
             nodename.sockets.extend(a)
-        return nodename
     def socket_factory(self, socket):
         #create socket using name specified in socket.attrib['name'] ('socketname')
         for x in socket.children:
@@ -227,6 +229,8 @@ class WriterDirectorVisitor(Visitor):
 	b = WriterBuilder()
 	for x in gen:
 	    x.accept(self)
+	etree.ElementTree(b.root)
+#       write etree to file
 	#return etree object and file path
     def visit_document(self, document):
 	b.build_document(document)
@@ -236,16 +240,26 @@ class WriterDirectorVisitor(Visitor):
 	b.build_socket(socket)
 
 class WriterBuilder(Builder):
-    def build_xml(self):
+    def __init__(self):
         self.stack = []
-        #instantiate etree
     def build_document(self, document):
 	self.stack.append(document)
-
+	a = dict()
+#	a.extend('name': 'document_name'})
+	a.extend(document.variables)
+        self.root = etree.Element('document', a) #superstructure creates root element. must be accessible to other instance methods.
     def build_node(self, node):
 	self.stack.append(node)
-
+        a = dict()
+#	a.extend({'name': 'node_name'})
+#       anchor_element = socket if there's one at top of stack (pop it off), otherwise, highest document (if so, remove any intervening nodes..""clean up")
+        etree.SubElement(anchor_element, 'node', a)
     def build_socket(self, socket):
 	if socket.linked_node is not None:
             self.stack.append(socket)
-	    
+	a = dict()
+#	a.extend({'name': 'socket_name'})
+	a.extend({'text': socket.text})
+	a.extend(socket.variables)
+#	anchor_node = highest node (don't pop it off)
+	etree.SubElement(anchor_node, 'socket', a)

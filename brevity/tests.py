@@ -165,9 +165,9 @@ class BuilderTestCase(unittest.TestCase):
         self.assertEqual(a.variables, document1.variables)
         b = ConstructionBuilder()
         b.build_node(node1)
-        c = ConstructionBulder()
+        c = ConstructionBuilder()
         self.assertEqual(b.variables, c.variables)
-        self.assertEqual(b.raw_tex, c.raw_text)
+        self.assertEqual(b.raw_text, c.raw_text)
     
         d = ConstructionBuilder()
         d.build_socket(socket5)
@@ -199,15 +199,15 @@ class ConstructionDirectorVisitorTestCase(unittest.TestCase):
 	
         b = ConstructionDirectorVisitor()
         test_text, test_vars = b.construct(node2)
-        text_node2 = socket4.text + '\n' + socket5.text
-        vars_node2 = socket4.variables.extend(socket5.variables)
+        text_node2 = socket4.text + socket5.text
+	vars_node2 = {'item2': 'pizzas', 'location1': 'Pizza Hut'}
         self.assertEqual(test_text, text_node2)
         self.assertEqual(test_vars, vars_node2)
 	
         c = ConstructionDirectorVisitor()
         test_text, test_vars = c.construct(document1)
         text_doc1 = socket1.text + socket2.text + socket3.text + socket4.text + socket5.text
-        vars_doc1 = {'item1': 'huevos rancheros', 'condiment': 'salsa', 'item2': 'pizzas', 'location1': 'Pizza Hut'}
+	vars_doc1 = {'item1': 'huevos rancheros', 'condiment': 'salsa', 'item2': 'pizzas', 'location1': 'Pizza Hut', 'extra': 'bacon'}
         self.assertEqual(test_text, text_doc1)
         self.assertEqual(test_vars, vars_doc1)
 
@@ -217,13 +217,8 @@ class WriterBuilderTestCase(unittest.TestCase):
 class WriterDirectorVisitorTestCase(unittest.TestCase):
     pass
 
-class PrinterTestCase(unittest.TestCase):
-    """Print a variety of component structures."""
-#    p = Printer()
-#
-#    p.print_to_txt()
-#    p.print_to_html()
-#    p.print_to_tex()
+class ReaderTestCase(unittest.TestCase):
+    pass
 
 if __name__ == "__main__":
     unittest.main()
