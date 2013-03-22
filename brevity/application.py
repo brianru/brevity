@@ -83,8 +83,8 @@ class TraversalVisitor(Visitor):
     """Lets clients iterate over data structure without knowing how the data structure is constructed."""
     def get_generator(self, component):
         component.accept(self)
-	return self.generator #does this have to be a yield statement?
-    def visit_document(self, document): #does not return generator directly per PEP 380
+	return self.generator
+    def visit_document(self, document): #cannot return generator directly until later version of python: see PEP 380
 	self.generator = doc_gen(document)
     def visit_node(self, node):
 	self.generator = node_gen(node)
@@ -121,7 +121,7 @@ class ConstructionDirectorVisitor(Visitor):
 	    x.accept(self)
         return self.builder.raw_text, self.builder.variables
     def visit_socket(self, socket):
-	if socket.linked_node is not None: #refactor to see if there is NO linked node, else pass
+	if socket.linked_node is not None:
 	    pass
 	else:
             self.builder.build_socket(socket)
@@ -179,12 +179,6 @@ class Writer(Visitor):
     def write_to_tex():
 	pass
 
-    def export(self, component):
-	constructor = ConstructionDirectorVisitor()
-	raw_text, variables = constructor.construct(component)
-	print raw_text
-	print variables
-	
 class Reader(object):
     def read_from_xml(self, xml_file):
         """Imports specified xml document.
@@ -226,40 +220,62 @@ class WriterDirectorVisitor(Visitor):
     def write_to_xml(self, component):
         t = TraversalVisitor()
 	gen = t.get_generator(component)
-	b = WriterBuilder()
+	self.b = WriterBuilder()
 	for x in gen:
 	    x.accept(self)
-	etree.ElementTree(b.root)
-#       write etree to file
-	#return etree object and file path
+	xml_tree = etree.ElementTree(b.root)
+	filename = 'writer_director_output.xml'
+	xml_tree.write(filename)
+	return xml_tree, filename
     def visit_document(self, document):
-	b.build_document(document)
+	self.b.build_document(document)
     def visit_node(self, node):
-	b.build_node(node)
+	self.b.build_node(node)
     def visit_socket(self, socket):
-	b.build_socket(socket)
+	self.b.build_socket(socket)
 
 class WriterBuilder(Builder):
+    """Given input components in top-down left-right order, build corresponding xml tree.
+    Refactor out anchor stack maintenance lines? 
+    
+    """
     def __init__(self):
         self.stack = []
+	#counters used to create unique component names in xml
+	self.doc_counter = 0
+	self.node_counter = 0
+	self.socket_counter = 0
     def build_document(self, document):
+	"""Build root element."""
 	self.stack.append(document)
-	a = dict()
-#	a.extend('name': 'document_name'})
-	a.extend(document.variables)
+        self.doc_counter += 1
+        a = dict()
+	a.extend('name': 'document' + str(self.doc_counter)})
+	a.update(document.variables)
         self.root = etree.Element('document', a) #superstructure creates root element. must be accessible to other instance methods.
     def build_node(self, node):
+	"""Build node element and add as child to appropriate anchor according to the anchor stack."""
 	self.stack.append(node)
-        a = dict()
-#	a.extend({'name': 'node_name'})
-#       anchor_element = socket if there's one at top of stack (pop it off), otherwise, highest document (if so, remove any intervening nodes..""clean up")
+        self.node_counter += 1
+	a = dict()
+	a.extend({'name': 'node' + str(self.node_counter)})
+	if type(self.stack[-1:]) == Socket: #If there's a socket above, this node must be linked to a socket.
+            anchor_element = self.stack.pop()
+        else: #Otherwise, we're iterating through nodes linked to a document object. Find that document object.
+	    doc_stack = [i for i in self.stack if type(i) == Document]
+	    anchor_element = doc_stack[-1:] #highest document
+	    while type(self.stack[-1:]) == Node:
+		self.stack.pop()
         etree.SubElement(anchor_element, 'node', a)
     def build_socket(self, socket):
+	"""Build socket element and add as child to anchor node."""
+        self.socker_counter += 1
 	if socket.linked_node is not None:
             self.stack.append(socket)
 	a = dict()
-#	a.extend({'name': 'socket_name'})
-	a.extend({'text': socket.text})
-	a.extend(socket.variables)
-#	anchor_node = highest node (don't pop it off)
+	a.extend({'name': 'socket' + str(self.socket_counter)})
+	a.update({'text': socket.text})
+	a.update(socket.variables)
+	node_stack = [i for i in self.stack if type(i) == Node] #If iterating through socket list, must remove that noise to find nearest anchor node.
+	anchor_node = node_stack[-1:] #highest node
 	etree.SubElement(anchor_node, 'socket', a)

@@ -212,13 +212,75 @@ class ConstructionDirectorVisitorTestCase(unittest.TestCase):
         self.assertEqual(test_vars, vars_doc1)
 
 class WriterBuilderTestCase(unittest.TestCase):
-    pass
+    def runTest(self):
+	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
+        socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
+        socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
+        node1 = Node([socket1, socket2, socket3])
+        socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
+        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
+        node2 = Node([socket4, socket5])
+        document1 = Document([node1, node2], {'item1': 'huevos rancheros'})
 
+        a = WriterBuilder()
+        a.build_document(document1)
+#       self.assertEqual(a.variables, document1.variables)
+        b = WriterBuilder()
+        b.build_node(node1)
+        c = WriterBuilder()
+#        self.assertEqual(b.variables, c.variables)
+#        self.assertEqual(b.raw_text, c.raw_text)
+    
+        d = WriterBuilder()
+        d.build_socket(socket5)
+        socket6 = Socket('The best breakfast A{item2} are at A{location1} in A{location1spec}.',\
+			 {'location1': 'Pizza Hut', 'location1spec': 'Westbury, New York'})
+        node3 = Node([socket6])
+        socket5.link_node(node3)
+        e = WriterBuilder()
+        e.build_socket(socket5)
+#        self.assertEqual(d.variables, e.variables)
+#        self.assertEqual(d.raw_text, e.raw_text)
+
+        print(etree.tostring(w.build_socket(socket1)))
+        
 class WriterDirectorVisitorTestCase(unittest.TestCase):
-    pass
+    def runTest(self):
+	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
+        socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
+        socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
+        node1 = Node([socket1, socket2, socket3])
+        socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
+        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
+        node2 = Node([socket4, socket5])
+        document1 = Document([node1, node2], {'item1': 'huevos rancheros'})
+	
+        a = WriterDirectorVisitor()
+        test_text, test_vars = a.write_to_xml(socket1)
+#        self.assertEqual(test_text, socket1.text)
+#        self.assertEqual(test_vars, socket1.variables)
+	
+        b = WriterDirectorVisitor()
+        test_text, test_vars = b.write_to_xml(node2)
+        text_node2 = socket4.text + socket5.text
+	vars_node2 = {'item2': 'pizzas', 'location1': 'Pizza Hut'}
+#        self.assertEqual(test_text, text_node2)
+#        self.assertEqual(test_vars, vars_node2)
+	
+        c = WriterDirectorVisitor()
+        test_text, test_vars = c.write_to_xml(document1)
+        text_doc1 = socket1.text + socket2.text + socket3.text + socket4.text + socket5.text
+	vars_doc1 = {'item1': 'huevos rancheros', 'condiment': 'salsa', 'item2': 'pizzas', 'location1': 'Pizza Hut', 'extra': 'bacon'}
+#        self.assertEqual(test_text, text_doc1)
 
 class ReaderTestCase(unittest.TestCase):
-    pass
+    """'samples/reader_test.xml' = sample xml file
+    Test objects are successfully recovered from said file.
+    Cover the standard list of object combinations.
+    
+    """
+    def runTest(self):
+	pass 
 
 if __name__ == "__main__":
     unittest.main()
