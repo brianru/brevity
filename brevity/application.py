@@ -1,4 +1,14 @@
-"""Brevity 0.2"""
+"""Brevity 0.2
+
+Tool for... 
+- designing contract models,
+- drafting contract instances,
+- amending existing contracts, and, 
+- querying coontract libraries.
+
+Provides a proprietary data structure that promotes internal consistency of documents and clause interoperability across contracts of varying purposes.
+Data structure is round-trip convertible into XML and supports plain text, markdown, and LaTeX formatting.
+"""
 
 import re, os, unittest, pdb, xml.etree.ElementTree as etree, tests
 
@@ -18,14 +28,14 @@ class Socket(object):
         self.linked_node = linked_node
 
     def __str__(self):
-        return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s' % (type(self), self.text, self.variables, self.linked_node)
+        return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s'\
+	        % (type(self), self.text, self.variables, self.linked_node)
     def accept(self, visitor):
         visitor.visit_socket(self)
     def link_node(self, new_node):
-	"""Attempts to update the linked node.
-	Does not raise an exception if this is replacing an existing linked node.
-	Raises exception if the node is incompatible.
-
+	"""Attempts to update the linked node by first checking node<->socket compatibility.
+        Returns True if update is successful.
+	Returns False is update is unsuccessful.
 	"""	    
 	node_vars = []
 	for x in new_node.sockets:
@@ -182,39 +192,45 @@ class Writer(Visitor):
 class Reader(object):
     def read_from_xml(self, xml_file):
         """Imports specified xml document.
-        Supply xml document as a filepath string.
+	Arguments: XML file path as a string
         
         """
         self.xml = etree.parse(xml_file)
         self.root = self.xml.getroot()
+	#Route flow to proper factory method
         #is there any way to implement a Visitor class based on the element attributes?
         #maybe something I can subclass? or some weird hack of dunder methods?
-	if root.attrib['name'] == 'document':
-            return self.doc_factory(root)
-        elif root.attib['name'] == 'node':
-            return self.node_factory(root)
-        elif root.attrib['name'] == 'socket':
-            return self.socket_factory(root)
+	if self.root.tag == 'document':
+            return self.doc_factory(self.root)
+        elif self.root.tag == 'node':
+            return self.node_factory(self.root)
+        elif self.root.tag == 'socket':
+            return self.socket_factory(self.root)
         else:
 	    raise #a more specific exception than this
-        
-    def doc_factory(self, doc):
-        #create doc using name specified in doc.attrib['name'] ('docname')
-        for x in doc.children:
-            a = node_factory(x)
-            docname.nodes.extend(a)
-        return docdname
-    def node_factory(self, node):
-        #create node using name specified in node.attrib['name'] ('nodename')
-        for x in node.children:
-            a = socket_factory(x)
-            nodename.sockets.extend(a)
-    def socket_factory(self, socket):
-        #create socket using name specified in socket.attrib['name'] ('socketname')
-        for x in socket.children:
-            a = node_factory(x)
-	    socketname.linked_node = a #refactor to use link_node method, raise exception if incompatible
-        return socketname
+    """Component factory methods recursively generate the document object tree.
+    Result accessible via 'root' instance variable.
+
+    """
+    def doc_factory(self, xml_document):
+        document_children = []
+	for child in xml_document.children:
+	    document_children.extend(self.node_factory(self, child))
+	return Document(document_children, xml_document.attrib['variables'])
+    def node_factory(self, xml_node):
+	node_children = []
+	for child in xml_node.children:
+	    node_children.extend(self.socket_factory(self, child))
+        return Node(node_children)
+    def socket_factory(self, xml_socket):
+	if xml_socket.children is not None:
+	    return Socket(xml_socket.contents,\
+			  xml_socket.attrib['variables']\
+			  self.node_factory(self, xml_socket.children))
+	else:
+	    return Socket(xml_socket.contents,\
+			  xml_socket.attrib['variables'],\
+			  None)
 
 class WriterDirectorVisitor(Visitor):
     def write_to_xml(self, component):
@@ -247,35 +263,41 @@ class WriterBuilder(Builder):
 	self.socket_counter = 0
     def build_document(self, document):
 	"""Build root element."""
-	self.stack.append(document)
         self.doc_counter += 1
         a = dict()
-	a.extend('name': 'document' + str(self.doc_counter)})
+	a.update({'name': 'document' + str(self.doc_counter)})
 	a.update(document.variables)
         self.root = etree.Element('document', a) #superstructure creates root element. must be accessible to other instance methods.
+	self.stack.append(self.root)
     def build_node(self, node):
 	"""Build node element and add as child to appropriate anchor according to the anchor stack."""
-	self.stack.append(node)
         self.node_counter += 1
 	a = dict()
-	a.extend({'name': 'node' + str(self.node_counter)})
-	if type(self.stack[-1:]) == Socket: #If there's a socket above, this node must be linked to a socket.
-            anchor_element = self.stack.pop()
-        else: #Otherwise, we're iterating through nodes linked to a document object. Find that document object.
-	    doc_stack = [i for i in self.stack if type(i) == Document]
-	    anchor_element = doc_stack[-1:] #highest document
-	    while type(self.stack[-1:]) == Node:
-		self.stack.pop()
-        etree.SubElement(anchor_element, 'node', a)
+	a.update({'name': 'node' + str(self.node_counter)})
+	if self.stack.count > 0:
+	    if self.stack[-1].tag == 'socket': #If there's a socket above, this node must be linked to a socket.
+                anchor_element = self.stack.pop()
+            else: #Otherwise, we're iterating through nodes linked to a document object. Find that document object.
+	        doc_stack = [i for i in self.stack if i.tag == 'document']
+	        anchor_element = doc_stack[-1] #highest document
+	        while self.stack[-1].tag == 'node':
+	    	    self.stack.pop()
+            e = etree.SubElement(anchor_element, 'node', a)
+        else:
+	    e = etree.Element('node', a)
+	self.stack.append(e)
     def build_socket(self, socket):
 	"""Build socket element and add as child to anchor node."""
-        self.socker_counter += 1
-	if socket.linked_node is not None:
-            self.stack.append(socket)
+        self.socket_counter += 1
 	a = dict()
-	a.extend({'name': 'socket' + str(self.socket_counter)})
+	a.update({'name': 'socket' + str(self.socket_counter)})
 	a.update({'text': socket.text})
 	a.update(socket.variables)
-	node_stack = [i for i in self.stack if type(i) == Node] #If iterating through socket list, must remove that noise to find nearest anchor node.
-	anchor_node = node_stack[-1:] #highest node
-	etree.SubElement(anchor_node, 'socket', a)
+	if self.stack.count > 0: 
+	    node_stack = [i for i in self.stack if i.tag == 'node'] #If iterating through socket list, must remove that noise to find nearest anchor node.
+	    anchor_node = node_stack[-1] #highest node
+	    e = etree.SubElement(anchor_node, 'socket', a)
+        else:
+	    e = etree.Element('socket', a)
+	if socket.linked_node is not None:
+            self.stack.append(e)

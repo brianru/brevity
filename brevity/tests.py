@@ -245,6 +245,7 @@ class WriterBuilderTestCase(unittest.TestCase):
         print(etree.tostring(w.build_socket(socket1)))
         
 class WriterDirectorVisitorTestCase(unittest.TestCase):
+    """Took script from ConstructionDirectorVisitorTestCase. Modify asserts as applicable. """
     def runTest(self):
 	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
         socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
