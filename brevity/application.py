@@ -15,25 +15,26 @@ import re, os, unittest, pdb, xml.etree.ElementTree as etree, tests
 ##### DATA MODEL #####
 
 class Socket(object):
-    """Lowest level structure.
-    Contains:
-        1) Uncompiled text (with variable placeholders)
-	2) Variable defaults
-	3) Linked Node
+    """Socket is the lowest level component in the data structure. It is the only component to contain document text. 
+    Documents can be enhanced by extending a socket with an entire Node (see link_node).
     
+    Attributes:
+        1) text: uncompiled, unformatted text with formatting tags and variable placeholders (as applicable)
+        2) variables: dictionary of variables. Dictionary keys should all be represented in variable placeholders in text (though variable placeholders may refer to keys stored elsewhere in the document).
+	3) linked_node: Node object which extends this socket. Any linked node must be compatible with this socket, i.e., it must contain a superset of variable keys. This attribute should never be modified directly. Please use the link_node method instead (it ensures compatibility).
+
     """
     def __init__(self, text, variables = dict(), linked_node = None):
 	self.text = text
 	self.variables = variables
         self.linked_node = linked_node
-
     def __str__(self):
         return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s'\
 	        % (type(self), self.text, self.variables, self.linked_node)
     def accept(self, visitor):
         visitor.visit_socket(self)
     def link_node(self, new_node):
-	"""Attempts to update the linked node by first checking node<->socket compatibility.
+	"""Attempts to update the linked node by first checking node<->socket compatibility (node must contain a superset of variable keys).
         Returns True if update is successful.
 	Returns False is update is unsuccessful.
 	"""	    
@@ -49,9 +50,11 @@ class Socket(object):
 	return True
 
 class Node(object):
-    """Intermediary structure. Provides constraints.
-    Contains:
-        1) Sockets
+    """Node is the intermediary component in the data structure -- it provides constraints. 
+    We think about the node as specifying bullets in an outline. Specifying the bullets defines how the content of the document should be organized, and thus, how it may be extended in the future (see linked_node attribute in Socket class).
+    
+    Attributes:
+	1) sockets: list of sockets
     
     """
     sockets = []
@@ -64,16 +67,17 @@ class Node(object):
 	visitor.visit_node(self)
     
 class Document(object):
-    """Top structure. Contains instance variables. Separates document components from particular document instance.
-    Contains:
-        1) Nodes
-	2) Instance variables
+    """Document is the top level component in the data structure -- it is generally the only visible component when interacting with document instances.
     
+    Attributes:
+        1) nodes: list of nodes
+	2) variables: dictionary of variables. Supersedes variable values found in underlying sockets (document-> instance variable values; socket->default variable values).
     """
     nodes = []
     def __init__(self, nodes, variables = dict()):
 	self.nodes = nodes
 	self.variables = variables
+    #def __str__(self):
     def accept(self, visitor):
 	visitor.visit_document(self)
 	
@@ -215,18 +219,18 @@ class Reader(object):
     def doc_factory(self, xml_document):
         document_children = []
 	for child in xml_document.children:
-	    document_children.extend(self.node_factory(self, child))
+	    document_children.extend(node_factory(self, child))
 	return Document(document_children, xml_document.attrib['variables'])
     def node_factory(self, xml_node):
 	node_children = []
 	for child in xml_node.children:
-	    node_children.extend(self.socket_factory(self, child))
+	    node_children.extend(socket_factory(self, child))
         return Node(node_children)
     def socket_factory(self, xml_socket):
 	if xml_socket.children is not None:
 	    return Socket(xml_socket.contents,\
-			  xml_socket.attrib['variables']\
-			  self.node_factory(self, xml_socket.children))
+			  xml_socket.attrib['variables'],\
+			  node_factory(self, xml_socket.children))
 	else:
 	    return Socket(xml_socket.contents,\
 			  xml_socket.attrib['variables'],\
@@ -256,48 +260,39 @@ class WriterBuilder(Builder):
     
     """
     def __init__(self):
-        self.stack = []
-	#counters used to create unique component names in xml
-	self.doc_counter = 0
-	self.node_counter = 0
-	self.socket_counter = 0
+        self.parent_stack = []
     def build_document(self, document):
-	"""Build root element."""
-        self.doc_counter += 1
-        a = dict()
-	a.update({'name': 'document' + str(self.doc_counter)})
-	a.update(document.variables)
-        self.root = etree.Element('document', a) #superstructure creates root element. must be accessible to other instance methods.
-	self.stack.append(self.root)
+	#stack should be empty if we build_document is called (document is always top of the stack)
+	if self.parent_stack:
+	    raise #a more informative exception than this
+        self.root = etree.Element('document', document.variables)
+	self.parent_stack.append(self.root)
     def build_node(self, node):
 	"""Build node element and add as child to appropriate anchor according to the anchor stack."""
-        self.node_counter += 1
-	a = dict()
-	a.update({'name': 'node' + str(self.node_counter)})
-	if self.stack.count > 0:
-	    if self.stack[-1].tag == 'socket': #If there's a socket above, this node must be linked to a socket.
-                anchor_element = self.stack.pop()
-            else: #Otherwise, we're iterating through nodes linked to a document object. Find that document object.
-	        doc_stack = [i for i in self.stack if i.tag == 'document']
-	        anchor_element = doc_stack[-1] #highest document
-	        while self.stack[-1].tag == 'node':
-	    	    self.stack.pop()
-            e = etree.SubElement(anchor_element, 'node', a)
-        else:
-	    e = etree.Element('node', a)
-	self.stack.append(e)
+	while True:
+	    if not self.parent_stack:
+		raise #XML writing requires a document object at the root (so something should be there!)
+	    elif self.parent_stack[-1].tag == 'socket':
+		parent = self.parent_stack.pop()
+		break
+	    elif self.parent_stack[-1].tag == 'node':
+		self.parent_stack.pop()
+		continue
+	    elif self.parent_stack[-1].tag == 'document':
+		parent = self.parent_stack.pop()
+		break
+	self.parent_stack.append(etree.SubElement(parent, 'node', node.variables))
     def build_socket(self, socket):
 	"""Build socket element and add as child to anchor node."""
-        self.socket_counter += 1
-	a = dict()
-	a.update({'name': 'socket' + str(self.socket_counter)})
-	a.update({'text': socket.text})
-	a.update(socket.variables)
-	if self.stack.count > 0: 
-	    node_stack = [i for i in self.stack if i.tag == 'node'] #If iterating through socket list, must remove that noise to find nearest anchor node.
-	    anchor_node = node_stack[-1] #highest node
-	    e = etree.SubElement(anchor_node, 'socket', a)
-        else:
-	    e = etree.Element('socket', a)
+	while True:
+	    if not self.parent_stack or\
+               self.parent_stack[-1].tag == 'document':
+	        raise #a more informative exception than this
+	    elif self.parent_stack[-1].tag == 'node':
+	        parent = self.parent_stack.pop()
+		break
+	    elif self.parent_stack[-1].tag == 'socket':
+		self.parent_stack.pop()
+	a = etree.SubElement(parent, 'socket', socket.variables)
 	if socket.linked_node is not None:
-            self.stack.append(e)
+	    self.parent_stack.append(a)
