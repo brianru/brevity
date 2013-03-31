@@ -12,7 +12,6 @@ markdown, and LaTeX formatting.
 """
 
 import re
-
 import xml.etree.ElementTree as etree
 
 
@@ -85,7 +84,8 @@ class Document(object):
 
     Attributes:
         1) nodes: list of nodes
-    2) variables: dictionary of variables. Supersedes variable values found in underlying sockets (document-> instance variable values; socket->default variable values).
+        2) variables: dictionary of variables. Supersedes variable values found in underlying sockets (document-> instance variable values; socket->default variable values).
+
     """
     nodes = []
 
@@ -101,7 +101,9 @@ class Document(object):
 ##### BUSINESS LOGIC #####
 
 class Visitor(object):
-    """Visitor pattern is used when actions differ by component type and the component type is not always known."""
+    """Visitor pattern is used when actions differ by component type and the component type is not reliably known by the requestor.
+
+    """
     def visit_socket(self, socket):
         pass
 
@@ -113,12 +115,16 @@ class Visitor(object):
 
 
 class TraversalVisitor(Visitor):
-    """Lets clients iterate over data structure without knowing how the data structure is constructed."""
+    """TraversalVisitor is an interface for component generators.
+    This lets you iterate over a data structure, from any starting component, without understanding the underlying composition.
+
+    """
     def get_generator(self, component):
         component.accept(self)
         return self.generator
 
-    #cannot return generator directly until later version of python: see PEP 380
+    # cannot return generator directly until later version of python
+    # see PEP 380
     def visit_document(self, document):
         self.generator = doc_gen(document)
 
@@ -130,8 +136,7 @@ class TraversalVisitor(Visitor):
 
 
 ## GENERATORS ##
-
-
+# rename using underscores to indicate these are internal methods
 def doc_gen(doc):
     yield doc
     for x in doc.nodes:
@@ -154,33 +159,33 @@ def sock_gen(socket):
 
 
 class ConstructionDirectorVisitor(Visitor):
-    """Directs construction of any document component. Visits components to route proper actions.
+    """Directs construction (flattening) of any document component and its substructure. The client does not need to be aware of the component's type.
 
     """
     def construct(self, component):
-        """Return cumulative active text and variables of component incl. all sub-components."""
+        """Return complete active text and variables of component -- including all components in sub-structure."""
         self.builder = ConstructionBuilder()
         t = TraversalVisitor()
         gen = t.get_generator(component)
         for x in gen:
             x.accept(self)
-            return self.builder.raw_text, self.builder.variables
+        return self.builder.raw_text, self.builder.variables
 
     def visit_socket(self, socket):
         if socket.linked_node is not None:
             pass
         else:
-                self.builder.build_socket(socket)
+            self.builder.build_socket(socket)
 
     def visit_node(self, node):
-        pass
+        self.builder.build_document(node)  # should this be "pass"?
 
     def visit_document(self, document):
         self.builder.build_document(document)
 
 
 class Builder(object):
-    """Allows client separation of product creation logic from product input logic."""
+    """Allows separation of product creation logic from product input logic."""
     def build_socket(self, socket):
         pass
 
@@ -192,11 +197,10 @@ class Builder(object):
 
 
 class ConstructionBuilder(Builder):
-    def __init__(self):
-        """Hide internal representation of document.
-        Must suffice for all potential uses.
+    """Separate knowledge of internal representation of components from the client-facing (Director) class.
 
-        """
+    """
+    def __init__(self):
         self.raw_text = ''
         self.variables = dict()
 
@@ -213,34 +217,22 @@ class ConstructionBuilder(Builder):
         self.variables = document.variables
 
 
-class Compiler(object):
-    """Constructs component structure then inserts variable values into text."""
-    def compile(self, component):
-        constructor = ConstructionDirectorVisitor()
-        raw_text, variables = constructor.construct(component)
+class Compiler(object):  # IMPLEMENT THIS
+    """Inserts variable values into text.
+    Does not construct (flatten) component data structure.
+    Component should be self-contained (all variable placeholders present in text should be defined within the inputs).
+
+    """
+    def compile(self, text, variables):
         #Revisit regex
         compiled_text = re.sub(r'A{(\w.*?)}', variables["\1"], raw_text)
 
 
-class Writer(Visitor):
-    """Output raw object with variable placeholders and values.
-    Use STRATEGY pattern to for different document formats.
+class Reader(object):
+    """Component factory methods recursively generate the document object tree.
+    Result accessible via 'root' instance variable.
 
     """
-    def write_to_txt():
-        pass
-
-    def write_to_html():
-        pass
-
-    def write_to_pdf():
-        pass
-
-    def write_to_tex():
-        pass
-
-
-class Reader(object):
     def read_from_xml(self, xml_file):
         """Imports specified xml document.
         Arguments: XML file path as a string
@@ -260,10 +252,6 @@ class Reader(object):
         else:
             raise  # a more specific exception than this
 
-    """Component factory methods recursively generate the document object tree.
-    Result accessible via 'root' instance variable.
-
-    """
     def doc_factory(self, xml_document):
         document_children = []
         for child in xml_document.children:
@@ -274,7 +262,7 @@ class Reader(object):
         node_children = []
         for child in xml_node.children:
             node_children.extend(self.socket_factory(self, child))
-            return Node(node_children)
+        return Node(node_children)
 
     def socket_factory(self, xml_socket):
         if xml_socket.children is not None:
@@ -287,12 +275,16 @@ class Reader(object):
                           None)
 
 
-class WriterDirectorVisitor(Visitor):
+class ExporterDirector(Visitor):
+    """Facilitates exporting components (complete data representation) to portable formats.
+    All components exported via this class are can be round-tripped back into the application without any data loss.
+
+    """
     def write_to_xml(self, component):
         t = TraversalVisitor()
         gen = t.get_generator(component)
-        self.b = WriterBuilder()
-        for x in gen:
+        self.b = Exporter()
+        for x in gen:  # event loop
             x.accept(self)
         xml_tree = etree.ElementTree(self.b.root)
         filename = 'writer_director_output.xml'
@@ -309,8 +301,8 @@ class WriterDirectorVisitor(Visitor):
         self.b.build_socket(socket)
 
 
-class WriterBuilder(Builder):
-    """Given input components in top-down left-right order, build corresponding xml tree.
+class Exporter(Builder):
+    """Given input components in top-down left-right order, builds a corresponding xml tree.
     Refactor out anchor stack maintenance lines?
 
     """
@@ -338,7 +330,9 @@ class WriterBuilder(Builder):
             elif self.parent_stack[-1].tag == 'document':
                 parent = self.parent_stack.pop()
                 break
-        self.parent_stack.append(etree.SubElement(parent, 'node', node.variables))
+        self.parent_stack.append(etree.SubElement(parent,
+                                                  'node',
+                                                  node.variables))
 
     def build_socket(self, socket):
         """Build socket element and add as child to anchor node."""
