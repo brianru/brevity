@@ -29,10 +29,14 @@ class Socket(object):
     3) linked_node: Node object which extends this socket. Any linked node must be compatible with this socket, i.e., it must contain a superset of variable keys. This attribute should never be modified directly. Please use the link_node method instead (it ensures compatibility).
 
     """
-    def __init__(self, text, variables=dict(), linked_node=None):
+    socket_counter = 0
+
+    def __init__(self, text='', variables=dict(), linked_node=None):
         self.text = text
         self.variables = variables
         self.linked_node = linked_node
+        self.oid = 's' + str(self.__class__.socket_counter)
+        self.__class__.socket_counter += 1
 
     def __str__(self):
         return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s'\
@@ -66,11 +70,13 @@ class Node(object):
     1) sockets: list of sockets
 
     """
-    sockets = []
+    node_counter = 0
 
     def __init__(self, sockets):
         self.sockets = sockets
         #raise exception if 1) sockets does not contain only sockets or 2) sockets is empty
+        self.oid = 'n' + str(self.__class__.node_counter)
+        self.__class__.node_counter += 1
 
     def __str__(self):
         return 'Component type: %s /nNumber of sockets: %s' % (type(self), self.sockets)
@@ -87,12 +93,13 @@ class Document(object):
         2) variables: dictionary of variables. Supersedes variable values found in underlying sockets (document-> instance variable values; socket->default variable values).
 
     """
-    nodes = []
+    document_counter = 0
 
     def __init__(self, nodes, variables=dict()):
         self.nodes = nodes
         self.variables = variables
-        #def __str__(self):
+        self.oid = 'd' + str(self.__class__.document_counter)
+        self.__class__.document_counter += 1
 
     def accept(self, visitor):
         visitor.visit_document(self)
@@ -313,7 +320,7 @@ class Exporter(Builder):
         #stack should be empty if we build_document is called (document is always top of the stack)
         if self.parent_stack:
             raise  # a more informative exception than this
-            self.root = etree.Element('document', document.variables)
+        self.root = etree.Element('document', document.variables)
         self.parent_stack.append(self.root)
 
     def build_node(self, node):
