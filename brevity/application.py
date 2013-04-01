@@ -231,8 +231,12 @@ class Compiler(object):  # IMPLEMENT THIS
 
     """
     def compile(self, text, variables):
-        #Revisit regex
-        compiled_text = re.sub(r'A{(\w.*?)}', variables["\1"], raw_text)
+        self.text = text
+        self.variables = variables
+        return re.sub(r'A{(\w.*?)}', self.repl, text)
+
+    def repl(self, key):
+        return self.variables[key.group(1)]
 
 
 class Reader(object):
