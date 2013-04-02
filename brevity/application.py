@@ -224,27 +224,34 @@ class ConstructionBuilder(Builder):
         self.variables = document.variables
 
 
-class Compiler(object):  # IMPLEMENT THIS
+class Compiler(object):
     """Inserts variable values into text.
-    Does not construct (flatten) component data structure.
-    Component should be self-contained (all variable placeholders present in text should be defined within the inputs).
+    Returns compiled text if successfully generated, returns False otherwise.
+    Note:
+    -- Does not construct (flatten) component data structure.
+    -- Component should be self-contained (all variable placeholders present in text should be defined within the inputs).
 
     """
     def compile(self, text, variables):
         self.text = text
         self.variables = variables
-        return re.sub(r'A{(\w.*?)}', self.repl, text)
+        try:
+            return re.sub(r'A{(\w.*?)}', self.repl, text)
+        except KeyError as e:
+            print 'key is not defined in variable dictionary: '\
+                  + e.message
+            return False
 
     def repl(self, key):
         return self.variables[key.group(1)]
 
 
-class Reader(object):
+class Importer(object):
     """Component factory methods recursively generate the document object tree.
     Result accessible via 'root' instance variable.
 
     """
-    def read_from_xml(self, xml_file):
+    def import_from_xml(self, xml_file):
         """Imports specified xml document.
         Arguments: XML file path as a string
 
