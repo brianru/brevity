@@ -11,11 +11,11 @@ Data structure is round-trip convertible into XML and supports plain text,
 markdown, and LaTeX formatting.
 """
 
-import re
+import re, pdb
 import xml.etree.ElementTree as etree
 
-
 ##### DATA MODEL #####
+
 
 class Socket(object):
     """Socket is the lowest level component in the data structure.
@@ -39,8 +39,16 @@ class Socket(object):
         self.__class__.socket_counter += 1
 
     def __str__(self):
-        return 'Component type: %s /nText: %s /nDefault variables: %s /nLinked node? %s'\
+        return 'Component type: %s \nText: %s \nDefault variables: %s \nLinked node? %s'\
             % (type(self), self.text, self.variables, self.linked_node)
+
+    def __eq__(self, other):
+        return self.text == other.text and\
+            self.variables == other.variables and\
+            self.linked_node == other.linked_node
+
+    def __ne__(self, other):
+        return not self == other
 
     def accept(self, visitor):
         visitor.visit_socket(self)
@@ -79,7 +87,13 @@ class Node(object):
         self.__class__.node_counter += 1
 
     def __str__(self):
-        return 'Component type: %s /nNumber of sockets: %s' % (type(self), self.sockets)
+        return 'Component type: %s \nNumber of sockets: %s' % (type(self), len(self.sockets))
+
+    def __eq__(self, other):
+        return self.sockets == other.sockets
+
+    def __ne__(self, other):
+        return not self == other
 
     def accept(self, visitor):
         visitor.visit_node(self)
@@ -100,6 +114,15 @@ class Document(object):
         self.variables = variables
         self.oid = 'd' + str(self.__class__.document_counter)
         self.__class__.document_counter += 1
+
+    def __str__(self):
+        return 'Component type: %s \nNumber of nodes: %s \nDictionary: %s' % (type(self), len(self.nodes), '\n'.join(self.variables))
+
+    def __eq__(self, other):
+        return self.nodes == other.nodes and self.variables == other.variables
+
+    def __ne__(self, other):
+        return not self == other
 
     def accept(self, visitor):
         visitor.visit_document(self)
@@ -146,23 +169,23 @@ class TraversalVisitor(Visitor):
 # rename using underscores to indicate these are internal methods
 def doc_gen(doc):
     yield doc
-    for x in doc.nodes:
-        for y in node_gen(x):
-            yield y
+    for node in doc.nodes:
+        for socket in node_gen(node):
+            yield socket
 
 
 def node_gen(node):
     yield node
-    for y in node.sockets:
-        for z in sock_gen(y):
-            yield z
+    for socket in node.sockets:
+        for item in sock_gen(socket):
+            yield item
 
 
 def sock_gen(socket):
     yield socket
     if socket.linked_node is not None:
-        for x in node_gen(socket.linked_node):
-            yield x
+        for socket in node_gen(socket.linked_node):
+            yield socket
 
 
 class ConstructionDirectorVisitor(Visitor):
@@ -185,7 +208,7 @@ class ConstructionDirectorVisitor(Visitor):
             self.builder.build_socket(socket)
 
     def visit_node(self, node):
-        self.builder.build_document(node)  # should this be "pass"?
+        self.builder.build_node(node)  # should this be "pass"?
 
     def visit_document(self, document):
         self.builder.build_document(document)
@@ -271,25 +294,25 @@ class Importer(object):
             raise  # a more specific exception than this
 
     def doc_factory(self, xml_document):
-        document_children = []
-        for child in xml_document.children:
-            document_children.extend(self.node_factory(self, child))
-        return Document(document_children, xml_document.attrib['variables'])
+        linked_nodes = []
+        for node in xml_document:
+            linked_nodes.append(self.node_factory(node))
+        return Document(linked_nodes, xml_document.attrib)
 
     def node_factory(self, xml_node):
-        node_children = []
-        for child in xml_node.children:
-            node_children.extend(self.socket_factory(self, child))
-        return Node(node_children)
+        linked_sockets = []
+        for socket in xml_node:
+            linked_sockets.append(self.socket_factory(socket))
+        return Node(linked_sockets)
 
     def socket_factory(self, xml_socket):
-        if xml_socket.children is not None:
-            return Socket(xml_socket.contents,
-                          xml_socket.attrib['variables'],
-                          self.node_factory(self, xml_socket.children))
+        if len(xml_socket) is not 0:
+            return Socket(xml_socket.text,
+                          xml_socket.attrib,
+                          self.node_factory(xml_socket[0]))
         else:
-            return Socket(xml_socket.contents,
-                          xml_socket.attrib['variables'],
+            return Socket(xml_socket.text,
+                          xml_socket.attrib,
                           None)
 
 
@@ -298,16 +321,15 @@ class ExporterDirector(Visitor):
     All components exported via this class are can be round-tripped back into the application without any data loss.
 
     """
-    def write_to_xml(self, component):
+    def export_to_xml(self, component, path = 'writer_director_output.xml'):
         t = TraversalVisitor()
         gen = t.get_generator(component)
         self.b = Exporter()
         for x in gen:  # event loop
             x.accept(self)
         xml_tree = etree.ElementTree(self.b.root)
-        filename = 'writer_director_output.xml'
-        xml_tree.write(filename)
-        return xml_tree, filename
+        xml_tree.write(path)
+        return xml_tree
 
     def visit_document(self, document):
         self.b.build_document(document)

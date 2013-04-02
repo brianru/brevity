@@ -45,44 +45,92 @@ class DocumentBadInputTestCase(BadInputTestCase):
     def runTest(self):
         self.assertRaises(ValueError,
                           lambda: br.Document([self.n1],
-                                      {'place1': 'Dos Toros'}))
+                                              {'place1': 'Dos Toros'}))
         self.assertRaises(ValueError, lambda: br.Document())
-
-
-class DocumentConstructionTestCase(unittest.TestCase):
-    """For each component, test update_xx method to ensure it correctly updates attributes.
-
-    """
 
 
 class DataTraversalTestCase(unittest.TestCase):
     """Create list of components. Traverse from head, popping the item from the list at each step. Assert list is empty at end of loop.
 
     """
+    def setUp(self):
+        self.components = []
+        self.s1 = br.Socket('This Sunday we are going to get a A{item1} with A{item2} for lunch.', {'item1': 'bialy', 'item2': 'cream cheese'})
+        self.components.append(self.s1.oid)
+        self.s2 = br.Socket('I think A{store1} has the best A{item1} in A{location1}.', {'store1': "Kossar's", 'location1': 'New York City'})
+        self.components.append(self.s2.oid)
+        self.n1 = br.Node([self.s1, self.s2])
+        self.components.append(self.n1.oid)
+        self.s5 = br.Socket('I think A{store1} has the best A{item1} in the entire A{location1}!', {'store1': "Kossar's", 'location1': 'New York City'})
+        self.components.append(self.s5.oid)
+        self.n4 = br.Node([self.s5])
+        self.components.append(self.n4.oid)
+        if not self.s2.link_node(self.n4):
+            raise ValueError
+        self.s3 = br.Socket('The A{item2} will be from A{store2}. They have great A{item3} A{item2}.', {'store2': "Russ and Daughter's", 'item3': 'goat'})
+        self.components.append(self.s3.oid)
+        self.n2 = br.Node([self.s3])
+        self.components.append(self.n2.oid)
+        self.s4 = br.Socket('We will also pick up some A{item4} for A{event1}.', {'item4': 'chopped liver', 'event1': 'Passover'})
+        self.components.append(self.s4.oid)
+        self.n3 = br.Node([self.s4])
+        self.components.append(self.n3.oid)
+        self.d1 = br.Document([self.n1, self.n2, self.n3])
+        self.components.append(self.d1.oid)
 
-
-class VisitorPatternTestCase(unittest.TestCase):
-    """Verify every component type has an accept() method that calls the correct visit_component() method.
-
-    """
-
-
-class BuilderPatternTestCase(unittest.TestCase):
-    pass
+    def runTest(self):
+        t = br.TraversalVisitor()
+        gen = t.get_generator(self.d1)
+        for i in gen:
+            self.components.remove(i.oid)
+        else:
+            self.assertFalse(self.components)
 
 
 ##### END-TO-END TESTS #####
 
-class ReadXMLTestCase(unittest.TestCase):
+class ImportXMLTestCase(unittest.TestCase):
     """Verify zero data loss."""
+    def runTest(self):
+        s1 = br.Socket('This Sunday we are going to get a A{item1} with A{item2} for lunch.', {'item1': 'bialy', 'item2': 'cream cheese'})
+        s2 = br.Socket('I think A{store1} has the best A{item1} in A{location1}.', {'store1': "Kossar's", 'location1': 'New York City'})
+        n1 = br.Node([s1, s2])
+        s5 = br.Socket('I think A{store1} has the best A{item1} in the entire A{location1}!', {'store1': "Kossar's", 'location1': 'world'})
+        n4 = br.Node([s5])
+        s2.link_node(n4)
+        s3 = br.Socket('The A{item2} will be from A{store2}. They have great A{item3} A{item2}.', {'store2': "Russ and Daughter's", 'item3': 'goat'})
+        n2 = br.Node([s3])
+        s4 = br.Socket('We will also pick up some A{item4} for A{event1}.', {'item4': 'chopped liver', 'event1': 'Passover'})
+        n3 = br.Node([s4])
+        d1 = br.Document([n1, n2, n3])
+        ctrl_obj = d1
+        im = br.Importer()
+        test_obj = im.import_from_xml('samples/reader_test.xml')
+        self.assertEqual(test_obj, ctrl_obj)
 
 
-class WriteXMLTestCase(unittest.TestCase):
+class ExportXMLTestCase(unittest.TestCase):
     """Verify zero data loss."""
+        # s1 = br.Socket('This Sunday we are going to get a A{item1} with A{item2} for lunch.', {'item1': 'bialy', 'item2': 'cream cheese'})
+        # s2 = br.Socket('I think A{store1} has the best A{item1} in A{location1}.', {'store1': "Kossar's", 'location1': 'New York City'})
+        # n1 = br.Node([s1, s2])
+        # s5 = br.Socket('I think A{store1} has the best A{item1} in the entire A{location1}!', {'store1': "Kossar's", 'location1': 'world'})
+        # n4 = br.Node([s5])
+        # s2.link_node(n4)
+        # s3 = br.Socket('The A{item2} will be from A{store2}. They have great A{item3} A{item2}.', {'store2': "Russ and Daughter's", 'item3': 'goat'})
+        # n2 = br.Node([s3])
+        # s4 = br.Socket('We will also pick up some A{item4} for A{event1}.', {'item4': 'chopped liver', 'event1': 'Passover'})
+        # n3 = br.Node([s4])
+        # d1 = br.Document([n1, n2, n3])
+        # ex = ExporterDirector()
 
 
 class RoundTripXMLTestCase(unittest.TestCase):
-    pass
+    """Try round-tripping every document in a test suite folder.
+    Include XML -> TXT/MD/LaTeX -> XML
+    and TXT/MD/LaTeX -> XML -> TXT/MD/LaTeX
+
+    """
 
 if __name__ == "__main__":
     unittest.main()

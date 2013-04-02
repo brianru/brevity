@@ -24,7 +24,7 @@ What we are making:
 
 - [x] separation of doc instance and doc model variables
 - [ ] unit testing
-- [ ] refactor data structure and data manipulation classes to provide enough flexibility for future versions
+- [x] refactor data structure and data manipulation classes to provide enough flexibility for future versions
 - [ ] amendment duality (simultaneously a standalone contract as well as an amending package)
 - [ ] Support markdown, .txt and LaTeX formats in parallel (strategy pattern for visitors)
 
