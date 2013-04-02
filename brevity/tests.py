@@ -1,287 +1,138 @@
-import re, os, pdb, unittest, xml.etree.ElementTree as etree
-from application import *
-###### UNIT TESTS ######
+import os
+import pdb
+import unittest
+import xml.etree.ElementTree as etree
+import application as br
 
-class USConstitutionStaticTestCase(unittest.TestCase):
-    """Import US constitution from a prepared .xml file.
-    Build .tex file and compare to original .tex file.
-    Compile into .txt.
-    Compile into .html.
-    Compile into .pdf.
-    
-    """
-    def runTest(self):
-	testxml = etree.parse('samples/constitution.xml')
-#	im = XMLImporter()
-#	constitution = im.import_xml(testxml)
 
-#	with open('constitution_test.xml', mode = 'w', encoding = 'utf-8') as result_xml:
-#	    ex = XMLExporter()
-#	    result_xml.write(ex.export_xml(constitution))
-	self.assertEqual(etree.parse('samples/constitution.xml'), etree.parse('constitution_text.xml'))
+##### UNIT TESTS #####
 
-	p = Printer()
-	const_tex = p.print_to_tex(constitution, 'tex', 'tests/constitution_test.tex')
-	self.assertEqual('samples/constitution.tex', const_tex)
+class BadInputTestCase(unittest.TestCase):
+    """Ensure application crashesnand burns immediately when fed bad inputs."""
+    def setUp(self):
+        self.s1 = br.Socket('I want A{item1}', {'item1': 'cheese'})
+        self.s2 = br.Socket('I want A{condiment} with my A{item2}.',
+                            {'condiment': 'cheese', 'item2': 'nachos'})
+        self.n1 = br.Node([self.s2])
 
-	c = Compiler()
-	compiled_constitution = c.compile(constitution)
-	self.assertEqual(p.print_to_txt(compiled_consititution), 'samples/constitution.txt')
-	self.assertEqual(p.print_to_html(compiled_constitution), 'samples/constitution.html')
-	self.assertEqual(p.print_to_pdf(compiled_constitution), 'samples/constitution.pdf')
 
-class USConstitutionDynamicTestCase(unittest.TestCase):
-    """Import US constitution and each amendment independently from a set of prepared .brvty files.
-    Build .tex file for each 50 year slice.
-    Compile each into .txt and compare to existing .txt file.
-    Compile into .pdf at each point.
-    
-    """
-
-class SocketTestCase(unittest.TestCase):
-    """Try linking compatible and incompatible nodes. """
-    def runTest(self):
-    	socket1 = Socket('I like breakfast A{item1}', {'item1': 'tacos'})
-    	socket2 = Socket('Especially with A{condiment}', {'condiment': 'salsa'})
-    	socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
-    	node1 = Node([socket1, socket2, socket3])
-    	socket4 = Socket('I like lots of different kinds of A{meal} food.', {'meal': 'breakfast'})
-	socket5 = Socket('Items suchs as A{item1}, A{item2}, A{item3} are among my favorites.', \
-			 {'item1': 'tacos', 'item2': 'omelettes', 'item3':'leftover pizza'})
-    	node2a = Node([socket4]) #incompatible with socket1
-	node2b = Node([socket4, socket5]) #compatible with socket1: see 'item1'
-	
-	self.assertFalse(socket1.link_node(node2a))
-	self.assertEqual(socket1.linked_node, None)
-	self.assertTrue(socket1.link_node(node2b))
-    	self.assertEqual(socket1.linked_node, node2b)
-
-class NodeTestCase(unittest.TestCase):
-    """Create a node.
-    Determine how empty nodes should be handled.
-    Ensure sockets are stored appropriately.
+class SocketBadInputTestCase(BadInputTestCase):
+    """1) Instantiate socket with incompatible node
+    2) Link incompatible node to existing socket
 
     """
     def runTest(self):
-	socket1 = Socket('I like breakfast A{item1}', {'item1': 'tacos'})
-    	socket2 = Socket('Especially with A{condiment}', {'condiment': 'salsa'})
-    	socket3 = Socket('...AND A{extra}', {'extra': 'bacon'})
-    	node1 = Node([socket1, socket2, socket3])
-        
-	self.assertRaises(TypeError, lambda: Node())
-	self.assertEqual(node1.sockets, [socket1, socket2, socket3])
+        self.assertRaises(ValueError,
+                          lambda: br.Socket('I want A{item1}',
+                                            {'item1': 'cheese'},
+                                            self.n1))
+        self.asertRaises(ValueError, self.s1.link_node(self.n1))
 
-class DocumentTestCase(unittest.TestCase):
-    """Figure out the stale cache thing."""
-    def runTest(self):
-	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
-    	socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
-    	socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
-    	node1 = Node([socket1, socket2, socket3])
-	socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
-        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
-	node2 = Node([socket4, socket5])
-	document1 = Document([node1, node2])
 
-	self.assertRaises(TypeError, lambda: Document())
-	self.assertEqual(document1.nodes, [node1, node2])
-
-class IteratorTestCase(unittest.TestCase):
-    """Build multi-tier document.
-    Iterate over full document as well as sub-structures.
+class NodeBadInputTestCase(BadInputTestCase):
+    """1) Instantiate empty node
 
     """
     def runTest(self):
-	t = TraversalVisitor()
-	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
-    	socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
-    	socket3 = Socket('...AND A{extra1}!', {'extra1': 'bacon'})
-    	node1 = Node([socket1, socket2, socket3])
-	socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
-        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
-	node2 = Node([socket4, socket5])
-	document1 = Document([node1, node2])
-        
-	#Node with sockets (not linked)
-        counter = 0
-	ng = t.get_generator(node1)
-	for x in ng:
-	    counter += 1
-        self.assertEqual(counter, 4) #ensure iterator passes over every object in the substructure exactly once
-	
-	#Node with sockets (linked)
-	socket6 = Socket('...AND A{extra1}, A{extra2} and A{extra3}!', {'extra1': 'bacon', 'extra2': 'eggs', 'extra3': 'cheese'})
-	node3 = Node([socket6])
-        socket3.link_node(node3)
-	self.assertEqual(socket3.linked_node, node3)
-        counter = 0
-	ng = t.get_generator(node1)
-	#pdb.set_trace()
-	for x in ng:
-	    counter += 1
-	self.assertEqual(counter, 6)
+        self.assertRaises(TypeError, lambda: br.Node())
 
-	#Document with nodes
-	counter = 0
-        dg = t.get_generator(document1)
-	for x in dg:
-	    counter += 1
-	self.assertEqual(counter, 10)
-	
-	#Socket with linked node
-	counter = 0
-        sg = t.get_generator(socket3)
-	for x in sg:
-	    counter += 1
-	self.assertEqual(counter, 3)
-	
-	#Socket without linked node
-        counter = 0
-	sg = t.get_generator(socket5)
-	for x in sg:
-	    counter += 1
-	self.assertEqual(counter, 1)
 
-class VisitorTestCase(unittest.TestCase):
-    """Create a visitor subclass and assert the following on every type of component object:
-    1) Component has an accept() method
-    2) Component's accept() method calls correct visit_???() method on the visitor
+class DocumentBadInputTestCase(BadInputTestCase):
+    """1) Instantiate document with incompatible node
+    2) Instantiate empty document
 
     """
-
-class BuilderTestCase(unittest.TestCase):
     def runTest(self):
-        socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
-        socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
-        socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
-        node1 = Node([socket1, socket2, socket3])
-        socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
-        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
-        node2 = Node([socket4, socket5])
-        document1 = Document([node1, node2], {'item1': 'huevos rancheros'})
+        self.assertRaises(ValueError,
+                          lambda: br.Document([self.n1],
+                                              {'place1': 'Dos Toros'}))
+        self.assertRaises(ValueError, lambda: br.Document())
 
-        a = ConstructionBuilder()
-        a.build_document(document1)
-        self.assertEqual(a.variables, document1.variables)
-        b = ConstructionBuilder()
-        b.build_node(node1)
-        c = ConstructionBuilder()
-        self.assertEqual(b.variables, c.variables)
-        self.assertEqual(b.raw_text, c.raw_text)
-    
-        d = ConstructionBuilder()
-        d.build_socket(socket5)
-        socket6 = Socket('The best breakfast A{item2} are at A{location1} in A{location1spec}.',\
-			 {'location1': 'Pizza Hut', 'location1spec': 'Westbury, New York'})
-        node3 = Node([socket6])
-        socket5.link_node(node3)
-        e = ConstructionBuilder()
-        e.build_socket(socket5)
-        self.assertEqual(d.variables, e.variables)
-        self.assertEqual(d.raw_text, e.raw_text)
 
-class ConstructionDirectorVisitorTestCase(unittest.TestCase):
-    """Construct a document."""
-    def runTest(self):
-	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
-        socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
-        socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
-        node1 = Node([socket1, socket2, socket3])
-        socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
-        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
-        node2 = Node([socket4, socket5])
-        document1 = Document([node1, node2], {'item1': 'huevos rancheros'})
-	
-        a = ConstructionDirectorVisitor()
-        test_text, test_vars = a.construct(socket1)
-        self.assertEqual(test_text, socket1.text)
-        self.assertEqual(test_vars, socket1.variables)
-	
-        b = ConstructionDirectorVisitor()
-        test_text, test_vars = b.construct(node2)
-        text_node2 = socket4.text + socket5.text
-	vars_node2 = {'item2': 'pizzas', 'location1': 'Pizza Hut'}
-        self.assertEqual(test_text, text_node2)
-        self.assertEqual(test_vars, vars_node2)
-	
-        c = ConstructionDirectorVisitor()
-        test_text, test_vars = c.construct(document1)
-        text_doc1 = socket1.text + socket2.text + socket3.text + socket4.text + socket5.text
-	vars_doc1 = {'item1': 'huevos rancheros', 'condiment': 'salsa', 'item2': 'pizzas', 'location1': 'Pizza Hut', 'extra': 'bacon'}
-        self.assertEqual(test_text, text_doc1)
-        self.assertEqual(test_vars, vars_doc1)
+class DataTraversalTestCase(unittest.TestCase):
+    """Create list of components. Traverse from head, popping the item from the list at each step. Assert list is empty at end of loop.
 
-class WriterBuilderTestCase(unittest.TestCase):
-    def runTest(self):
-	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
-        socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
-        socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
-        node1 = Node([socket1, socket2, socket3])
-        socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
-        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
-        node2 = Node([socket4, socket5])
-        document1 = Document([node1, node2], {'item1': 'huevos rancheros'})
-
-        a = WriterBuilder()
-        a.build_document(document1)
-#       self.assertEqual(a.variables, document1.variables)
-        b = WriterBuilder()
-        b.build_node(node1)
-        c = WriterBuilder()
-#        self.assertEqual(b.variables, c.variables)
-#        self.assertEqual(b.raw_text, c.raw_text)
-    
-        d = WriterBuilder()
-        d.build_socket(socket5)
-        socket6 = Socket('The best breakfast A{item2} are at A{location1} in A{location1spec}.',\
-			 {'location1': 'Pizza Hut', 'location1spec': 'Westbury, New York'})
-        node3 = Node([socket6])
-        socket5.link_node(node3)
-        e = WriterBuilder()
-        e.build_socket(socket5)
-#        self.assertEqual(d.variables, e.variables)
-#        self.assertEqual(d.raw_text, e.raw_text)
-
-        print(etree.tostring(w.build_socket(socket1)))
-        
-class WriterDirectorVisitorTestCase(unittest.TestCase):
-    """Took script from ConstructionDirectorVisitorTestCase. Modify asserts as applicable. """
-    def runTest(self):
-	socket1 = Socket('I like breakfast A{item1}.', {'item1': 'tacos'})
-        socket2 = Socket('Especially with A{condiment}...', {'condiment': 'salsa'})
-        socket3 = Socket('...AND A{extra}!', {'extra': 'bacon'})
-        node1 = Node([socket1, socket2, socket3])
-        socket4 = Socket('I also like breakfast A{item2}.', {'item2': 'pizzas'})
-        socket5 = Socket('The best breakfast A{item2} are at A{location1}.', {'location1': 'Pizza Hut'})
-        node2 = Node([socket4, socket5])
-        document1 = Document([node1, node2], {'item1': 'huevos rancheros'})
-	
-        a = WriterDirectorVisitor()
-        test_text, test_vars = a.write_to_xml(socket1)
-#        self.assertEqual(test_text, socket1.text)
-#        self.assertEqual(test_vars, socket1.variables)
-	
-        b = WriterDirectorVisitor()
-        test_text, test_vars = b.write_to_xml(node2)
-        text_node2 = socket4.text + socket5.text
-	vars_node2 = {'item2': 'pizzas', 'location1': 'Pizza Hut'}
-#        self.assertEqual(test_text, text_node2)
-#        self.assertEqual(test_vars, vars_node2)
-	
-        c = WriterDirectorVisitor()
-        test_text, test_vars = c.write_to_xml(document1)
-        text_doc1 = socket1.text + socket2.text + socket3.text + socket4.text + socket5.text
-	vars_doc1 = {'item1': 'huevos rancheros', 'condiment': 'salsa', 'item2': 'pizzas', 'location1': 'Pizza Hut', 'extra': 'bacon'}
-#        self.assertEqual(test_text, text_doc1)
-
-class ReaderTestCase(unittest.TestCase):
-    """'samples/reader_test.xml' = sample xml file
-    Test objects are successfully recovered from said file.
-    Cover the standard list of object combinations.
-    
     """
+    def setUp(self):
+        self.components = []
+        self.s1 = br.Socket('This Sunday we are going to get a A{item1} with A{item2} for lunch.', {'item1': 'bialy', 'item2': 'cream cheese'})
+        self.components.append(self.s1.oid)
+        self.s2 = br.Socket('I think A{store1} has the best A{item1} in A{location1}.', {'store1': "Kossar's", 'location1': 'New York City'})
+        self.components.append(self.s2.oid)
+        self.n1 = br.Node([self.s1, self.s2])
+        self.components.append(self.n1.oid)
+        self.s5 = br.Socket('I think A{store1} has the best A{item1} in the entire A{location1}!', {'store1': "Kossar's", 'location1': 'New York City'})
+        self.components.append(self.s5.oid)
+        self.n4 = br.Node([self.s5])
+        self.components.append(self.n4.oid)
+        if not self.s2.link_node(self.n4):
+            raise ValueError
+        self.s3 = br.Socket('The A{item2} will be from A{store2}. They have great A{item3} A{item2}.', {'store2': "Russ and Daughter's", 'item3': 'goat'})
+        self.components.append(self.s3.oid)
+        self.n2 = br.Node([self.s3])
+        self.components.append(self.n2.oid)
+        self.s4 = br.Socket('We will also pick up some A{item4} for A{event1}.', {'item4': 'chopped liver', 'event1': 'Passover'})
+        self.components.append(self.s4.oid)
+        self.n3 = br.Node([self.s4])
+        self.components.append(self.n3.oid)
+        self.d1 = br.Document([self.n1, self.n2, self.n3])
+        self.components.append(self.d1.oid)
+
     def runTest(self):
-	pass 
+        t = br.TraversalVisitor()
+        gen = t.get_generator(self.d1)
+        for i in gen:
+            self.components.remove(i.oid)
+        else:
+            self.assertFalse(self.components)
+
+
+##### END-TO-END TESTS #####
+
+
+class XMLTestCase(unittest.TestCase):
+    def setUp(self):
+        self.s1 = br.Socket('This Sunday we are going to get a A{item1} with A{item2} for lunch.', {'item1': 'bialy', 'item2': 'cream cheese'})
+        self.s2 = br.Socket('I think A{store1} has the best A{item1} in A{location1}.', {'store1': "Kossar's", 'location1': 'New York City'})
+        self.n1 = br.Node([self.s1, self.s2])
+        self.s5 = br.Socket('I think A{store1} has the best A{item1} in the entire A{location1}!', {'store1': "Kossar's", 'location1': 'world'})
+        self.n4 = br.Node([self.s5])
+        self.s2.link_node(self.n4)
+        self.s3 = br.Socket('The A{item2} will be from A{store2}. They have great A{item3} A{item2}.', {'store2': "Russ and Daughter's", 'item3': 'goat'})
+        self.n2 = br.Node([self.s3])
+        self.s4 = br.Socket('We will also pick up some A{item4} for A{event1}.', {'item4': 'chopped liver', 'event1': 'Passover'})
+        self.n3 = br.Node([self.s4])
+        self.d1 = br.Document([self.n1, self.n2, self.n3])
+
+
+class ImportXMLTestCase(XMLTestCase):
+    """Verify zero data loss."""
+    def runTest(self):
+        ctrl_obj = self.d1
+        im = br.Importer()
+        test_obj = im.import_from_xml('samples/reader_test.xml')
+        self.assertEqual(test_obj, ctrl_obj)
+
+
+class ExportXMLTestCase(XMLTestCase):
+    """Verify zero data loss."""
+    def runTest(self):
+        ctrl_obj = 'samples/reader_text.xml'
+        ex = br.ExporterDirector()
+        import time
+        test_obj = str(time.time()) + '.xml'
+        ex.export_to_xml(self.d1, test_obj)
+        with open(ctrl_obj, 'r') as x:
+            with open(test_obj, 'r') as y:
+                self.assertEqual(x.read(), y.read())
+
+
+class RoundTripXMLTestCase(unittest.TestCase):
+    """Try round-tripping every document in a test suite folder.
+    Include XML -> TXT/MD/LaTeX -> XML
+    and TXT/MD/LaTeX -> XML -> TXT/MD/LaTeX
+
+    """
 
 if __name__ == "__main__":
     unittest.main()

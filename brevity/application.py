@@ -321,7 +321,7 @@ class ExporterDirector(Visitor):
     All components exported via this class are can be round-tripped back into the application without any data loss.
 
     """
-    def export_to_xml(self, component, path = 'writer_director_output.xml'):
+    def export_to_xml(self, component, path='writer_director_output.xml'):
         t = TraversalVisitor()
         gen = t.get_generator(component)
         self.b = Exporter()
@@ -344,6 +344,7 @@ class ExporterDirector(Visitor):
 class Exporter(Builder):
     """Given input components in top-down left-right order, builds a corresponding xml tree.
     Refactor out anchor stack maintenance lines?
+    Make above assumption (input order) explicit?
 
     """
     def __init__(self):
@@ -352,7 +353,7 @@ class Exporter(Builder):
     def build_document(self, document):
         #stack should be empty if we build_document is called (document is always top of the stack)
         if self.parent_stack:
-            raise  # a more informative exception than this
+            raise ValueError
         self.root = etree.Element('document', document.variables)
         self.parent_stack.append(self.root)
 
@@ -360,7 +361,7 @@ class Exporter(Builder):
         """Build node element and add as child to appropriate anchor according to the anchor stack."""
         while True:
             if not self.parent_stack:
-                raise  # XML writing requires a document object at the root (so something should be there!)
+                raise ValueError  # XML writing requires a document object at the root (so something should be there!)
             elif self.parent_stack[-1].tag == 'socket':
                 parent = self.parent_stack.pop()
                 break
@@ -370,16 +371,15 @@ class Exporter(Builder):
             elif self.parent_stack[-1].tag == 'document':
                 parent = self.parent_stack.pop()
                 break
-        self.parent_stack.append(etree.SubElement(parent,
-                                                  'node',
-                                                  node.variables))
+        self.parent_stack.append(etree.SubElement(parent, 'node'))
 
     def build_socket(self, socket):
         """Build socket element and add as child to anchor node."""
         while True:
             if not self.parent_stack or\
                self.parent_stack[-1].tag == 'document':
-                raise  # a more informative exception than this
+                pdb.set_trace()
+                raise ValueError  # a more informative exception than this
             elif self.parent_stack[-1].tag == 'node':
                 parent = self.parent_stack.pop()
                 break
