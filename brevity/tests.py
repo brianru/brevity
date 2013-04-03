@@ -7,6 +7,8 @@ import pdb
 import unittest
 import application as br
 import glob
+import datetime
+import tempfile
 
 
 ##### UNIT TESTS #####
@@ -120,8 +122,7 @@ class ExportXMLTestCase(XMLTestCase):
     def runTest(self):
         ctrl_obj = 'samples/reader_test.xml'
         ex = br.ExporterDirector()
-        import time
-        test_obj = str('export_test/' + time.time()) + '.xml'
+        test_obj = 'export_test/' + str(datetime.datetime.now()) + '.xml'
         ex.export_to_xml(self.d1, test_obj)
         with open(ctrl_obj, 'r') as x:
             with open(test_obj, 'r') as y:
@@ -136,12 +137,14 @@ class RoundTripXMLTestCase(unittest.TestCase):
     """
     def runTest(self):
         xml_files = glob.glob('samples/*.xml')
-        # im = br.Importer()
-        # ex = br.ExporterDirector()
+        im = br.Importer()
+        ex = br.ExporterDirector()
         # counter = 1
-        # for doc in xml_files:
-        #     filename, counter = 'roundtrip#%d' % counter, counter + 1
-        #     self.assertEqual(doc, ex.export_to_xml(im.import_from_xml(doc), filename)  #current uses paths as arguments - need to make this something assertEqual can actually use to compare document contents
+        for doc in xml_files:
+            # filename, counter = 'roundtrip#%d_%s.xml' % (counter, datetime.datetime.now()), counter + 1
+            self.assertEqual(doc,
+                             ex.export_to_xml(im.import_from_xml(doc),
+                                              tempfile.TemporaryFile()))
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 Welcome to Brevity.
--------------------
+===================
 
 Brevity is a tool for drafting, negotiating, executing and amending contracts. 
 
-Please feel free to check out the code and forward any suggestions or feedback. 
+Please feel free to check out the code and forward any suggestions or feedback.
 
-_0.1_: Prototype (done)
-
+0.1: Prototype (done)
+---------------------
 What we made:
 
 - document, node, socket data model
@@ -18,12 +18,12 @@ What we learned:
 - github
 - vim
 
-_0.2_ A big step forward (in progress)
-
+0.2: A big step forward (in progress)
+--------------------------------------
 What we are making:
 
 - [x] separation of doc instance and doc model variables
-- [ ] unit testing
+- [x] unit testing
 - [x] refactor data structure and data manipulation classes to provide enough flexibility for future versions
 - [ ] amendment duality (simultaneously a standalone contract as well as an amending package)
 - [ ] Support markdown, .txt and LaTeX formats in parallel (strategy pattern for visitors)
@@ -35,18 +35,27 @@ What we are learning:
 - builder pattern
 - unit testing
 - sublime text 2
-- 
+- parsing xml
+- debugging with pdb
 
-_0.3_ Make it last
-What we want to learn:
+0.3 Make it last
+----------------
+- [ ] host on Google App Engine
+- [ ] use NDB for persistence
+- [ ] component versioning
+- [ ] agreement slicing
+- [ ] prototype web interface using Bootstrap
+- [ ] prototype branding
 
-What we want to make:
-- [ ] DB
-- [ ] Component versioning (git?) 
-- [ ] Agreement slicing
-- [ ] Rudimentary web interface via GAE
+0.4 Make it nimble
+------------------
+- [ ] implement endpoints
+- [ ] prototype mobile interface
+- [ ] refine web interface
+- [ ] implement google accounts
+- [ ] metrics
+- [ ] logging
 
-_0.4_ Make it pretty
 
 _0.5_ Make it really useful
 
