@@ -14,7 +14,7 @@ markdown, and LaTeX formatting.
 
 # import pdb
 import re
-import xml.etree.ElementTree as etree
+from lxml import etree
 
 ##### DATA MODEL #####
 
@@ -28,15 +28,16 @@ class Socket(object):
     Attributes:
         1) text: uncompiled, unformatted text with formatting tags and variable placeholders (as applicable)
         2) variables: dictionary of variables. Dictionary keys should all be represented in variable placeholders in text (though variable placeholders may refer to keys stored elsewhere in the document).
-    3) linked_node: Node object which extends this socket. Any linked node must be compatible with this socket, i.e., it must contain a superset of variable keys. This attribute should never be modified directly. Please use the link_node method instead (it ensures compatibility).
+        3) linked_node: Node object which extends this socket. Any linked node must be compatible with this socket, i.e., it must contain a superset of variable keys. This attribute should never be modified directly. Please use the link_node method instead (it ensures compatibility).
 
     """
     socket_counter = 0
 
-    def __init__(self, text='', variables=dict(), linked_node=None):
+    def __init__(self, text='', variables=dict(), link_this_node=None):
         self.text = text
         self.variables = variables
-        self.linked_node = linked_node
+        if not self.link_node(link_this_node):
+            raise ValueError
         self.oid = 's' + str(self.__class__.socket_counter)
         self.__class__.socket_counter += 1
 
@@ -57,19 +58,23 @@ class Socket(object):
 
     def link_node(self, new_node):
         """Attempts to update the linked node by first checking node<->socket compatibility (node must contain a superset of variable keys).
-            Returns True if update is successful.
+        Returns True if update is successful.
         Returns False is update is unsuccessful.
         """
-        node_vars = []
-        for x in new_node.sockets:
-            node_vars.extend(x.variables.keys())
-        #build separate method in socket to perform below comparison
-        #if new_node >= self
-        for y in self.variables.keys():
-            if y not in node_vars:
-                return False
-        self.linked_node = new_node
-        return True
+        if new_node is None:
+            self.linked_node = None
+            return True
+        else:
+            node_vars = []
+            for x in new_node.sockets:
+                node_vars.extend(x.variables.keys())
+            #build separate method in socket to perform below comparison
+            #if new_node >= self
+            for y in self.variables.keys():
+                if y not in node_vars:
+                    return False
+            self.linked_node = new_node
+            return True
 
 
 class Node(object):
@@ -106,13 +111,16 @@ class Document(object):
 
     Attributes:
         1) nodes: list of nodes
-        2) variables: dictionary of variables. Supersedes variable values found in underlying sockets (document-> instance variable values; socket->default variable values).
+        2) variables: dictionary of variables. Supersedes variable values found in underlying sockets (document->instance variable values; socket->default variable values).
 
     """
     document_counter = 0
 
     def __init__(self, nodes, variables=dict()):
-        self.nodes = nodes
+        if len(nodes) == 0:
+            raise ValueError
+        else:
+            self.nodes = nodes
         self.variables = variables
         self.oid = 'd' + str(self.__class__.document_counter)
         self.__class__.document_counter += 1
@@ -281,7 +289,8 @@ class Importer(object):
         Arguments: XML file path as a string
 
         """
-        self.xml = etree.parse(xml_file)
+        parser = etree.XMLParser(remove_blank_text=True)
+        self.xml = etree.parse(xml_file, parser)
         self.root = self.xml.getroot()
         #Route flow to proper factory method
         #is there any way to implement a Visitor class based on the element attributes?
@@ -358,7 +367,6 @@ class Exporter(Builder):
             raise ValueError
         self.root = etree.Element('document', document.variables)
         self.parent_stack.append(self.root)
-        # print 'build_document: \n%s \n%s' % (str(document), self.parent_stack)
 
     def build_node(self, node):
         """Build node element and add as child to appropriate anchor according to the anchor stack."""
@@ -377,7 +385,6 @@ class Exporter(Builder):
                 parent = self.parent_stack[-1]
                 break
         self.parent_stack.append(etree.SubElement(parent, 'node'))
-        # print 'build_node: \n%s \n%s' % (str(node), self.parent_stack)
 
     def build_socket(self, socket):
         """Build socket element and add as child to anchor node."""
@@ -395,4 +402,3 @@ class Exporter(Builder):
         a.text = socket.text
         if socket.linked_node is not None:
             self.parent_stack.append(a)
-            # print 'build_socket: \n%s \n%s' % (str(socket), self.parent_stack)
