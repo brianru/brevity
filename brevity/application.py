@@ -1,17 +1,19 @@
 """Brevity 0.2
 
-Tool for...
-- designing contract models- drafting contract instances,
+A tool for...
+- designing contract models
+- drafting contract instances,
 - amending existing contracts, and,
 - querying coontract libraries.
 
 Provides a proprietary data structure that promotes internal consistency of
 documents and clause interoperability across contracts of varying purposes.
-Data structure is round-trip convertible into XML and supports plain text,
+Data structure is round-trip convertible into XML while supporting plain text,
 markdown, and LaTeX formatting.
 """
 
-import re, pdb
+# import pdb
+import re
 import xml.etree.ElementTree as etree
 
 ##### DATA MODEL #####
@@ -329,7 +331,7 @@ class ExporterDirector(Visitor):
             x.accept(self)
         xml_tree = etree.ElementTree(self.b.root)
         xml_tree.write(path)
-        return xml_tree
+        return path
 
     def visit_document(self, document):
         self.b.build_document(document)
@@ -356,6 +358,7 @@ class Exporter(Builder):
             raise ValueError
         self.root = etree.Element('document', document.variables)
         self.parent_stack.append(self.root)
+        # print 'build_document: \n%s \n%s' % (str(document), self.parent_stack)
 
     def build_node(self, node):
         """Build node element and add as child to appropriate anchor according to the anchor stack."""
@@ -363,28 +366,33 @@ class Exporter(Builder):
             if not self.parent_stack:
                 raise ValueError  # XML writing requires a document object at the root (so something should be there!)
             elif self.parent_stack[-1].tag == 'socket':
+                # socket can only have 1 linked node. this is it, so pop off the socket.
                 parent = self.parent_stack.pop()
                 break
             elif self.parent_stack[-1].tag == 'node':
+                # if the top of the stack contains a node, all child components of that node have been 'built', so remove it
                 self.parent_stack.pop()
                 continue
             elif self.parent_stack[-1].tag == 'document':
-                parent = self.parent_stack.pop()
+                parent = self.parent_stack[-1]
                 break
         self.parent_stack.append(etree.SubElement(parent, 'node'))
+        # print 'build_node: \n%s \n%s' % (str(node), self.parent_stack)
 
     def build_socket(self, socket):
         """Build socket element and add as child to anchor node."""
         while True:
             if not self.parent_stack or\
                self.parent_stack[-1].tag == 'document':
-                pdb.set_trace()
+                print self.parent_stack
                 raise ValueError  # a more informative exception than this
             elif self.parent_stack[-1].tag == 'node':
-                parent = self.parent_stack.pop()
+                parent = self.parent_stack[-1]
                 break
             elif self.parent_stack[-1].tag == 'socket':
                 self.parent_stack.pop()
         a = etree.SubElement(parent, 'socket', socket.variables)
+        a.text = socket.text
         if socket.linked_node is not None:
             self.parent_stack.append(a)
+            # print 'build_socket: \n%s \n%s' % (str(socket), self.parent_stack)

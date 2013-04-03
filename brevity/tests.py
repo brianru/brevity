@@ -1,8 +1,12 @@
-import os
+"""Primary test script.
+
+"""
+
+
 import pdb
 import unittest
-import xml.etree.ElementTree as etree
 import application as br
+import glob
 
 
 ##### UNIT TESTS #####
@@ -87,9 +91,6 @@ class DataTraversalTestCase(unittest.TestCase):
             self.assertFalse(self.components)
 
 
-##### END-TO-END TESTS #####
-
-
 class XMLTestCase(unittest.TestCase):
     def setUp(self):
         self.s1 = br.Socket('This Sunday we are going to get a A{item1} with A{item2} for lunch.', {'item1': 'bialy', 'item2': 'cream cheese'})
@@ -117,10 +118,10 @@ class ImportXMLTestCase(XMLTestCase):
 class ExportXMLTestCase(XMLTestCase):
     """Verify zero data loss."""
     def runTest(self):
-        ctrl_obj = 'samples/reader_text.xml'
+        ctrl_obj = 'samples/reader_test.xml'
         ex = br.ExporterDirector()
         import time
-        test_obj = str(time.time()) + '.xml'
+        test_obj = str('export_test/' + time.time()) + '.xml'
         ex.export_to_xml(self.d1, test_obj)
         with open(ctrl_obj, 'r') as x:
             with open(test_obj, 'r') as y:
@@ -133,6 +134,15 @@ class RoundTripXMLTestCase(unittest.TestCase):
     and TXT/MD/LaTeX -> XML -> TXT/MD/LaTeX
 
     """
+    def runTest(self):
+        xml_files = glob.glob('samples/*.xml')
+        # im = br.Importer()
+        # ex = br.ExporterDirector()
+        # counter = 1
+        # for doc in xml_files:
+        #     filename, counter = 'roundtrip#%d' % counter, counter + 1
+        #     self.assertEqual(doc, ex.export_to_xml(im.import_from_xml(doc), filename)  #current uses paths as arguments - need to make this something assertEqual can actually use to compare document contents
+
 
 if __name__ == "__main__":
     unittest.main()
