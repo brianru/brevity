@@ -1,7 +1,7 @@
 """Brevity 0.2
 
 A tool for...
-- designing contract models
+- designing contract models,
 - drafting contract instances,
 - amending existing contracts, and,
 - querying coontract libraries.
@@ -15,11 +15,6 @@ markdown, and LaTeX formatting.
 # import pdb
 import re
 from lxml import etree
-
-##### DATA MODEL #####
-FORMAT_LATEX = 2
-FORMAT_MARKDOWN = 1
-FORMAT_TEXT = 0
 
 
 class Socket(object):
@@ -341,7 +336,7 @@ class ExporterDirector(Visitor):
     All components exported via this class are can be round-tripped back into the application without any data loss.
 
     """
-    def export_to_xml(self, component, path='writer_director_output.xml'):
+    def export_to_xml(self, component, path):
         t = TraversalVisitor()
         gen = t.get_generator(component)
         self.b = Exporter()

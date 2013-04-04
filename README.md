@@ -36,6 +36,7 @@ What we are learning:
 - sublime text 2
 - parsing xml
 - debugging with pdb
+- file manipulation
 
 0.3 Make it last
 ----------------
@@ -57,13 +58,17 @@ What we are learning:
 - [ ] logging
 
 
-_0.5_ Make it really useful
+0.5 Make it really useful
+-------------------------
 
-_0.6_ Make it social
+0.6 Make it social
+------------------
 
-_0.7_ Make money
+0.7 Make money
+--------------
 
-_0.8_ Teach it how to learn
+0.8 Teach it how to learn
+-------------------------
 
 - [ ] Accounts
 - [ ] Design interface
@@ -74,3 +79,4 @@ _0.8_ Teach it how to learn
 
 
 1.0 ? 
+=====
