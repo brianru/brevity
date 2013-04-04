@@ -134,6 +134,21 @@ class ExportXMLTestCase(XMLTestCase):
                 self.assertEqual(x.read(), y.read())
 
 
+class RoundTripConstitutionTestCase(unittest.TestCase):
+    def runTest(self):
+        im = br.Importer()
+        ex = br.ExporterDirector()
+        a = im.import_from_xml('samples/constitution.xml')
+        b = ex.export_to_xml(a, 'constitution_' + str(datetime.datetime.now()) + '.xml')
+        with open('samples/constitution.xml', 'r') as x:
+            with open(b, 'r') as y:
+                for (a, b) in zip(x.readlines(), y.readlines()):
+                    if a != b:
+                        print 'sample: ' + a
+                        print 'test: ' + b
+                self.assertEqual(x.read(), y.read())
+
+
 class RoundTripXMLTestCase(unittest.TestCase):
     """Try round-tripping every document in a test suite folder.
     Include XML -> TXT/MD/LaTeX -> XML
