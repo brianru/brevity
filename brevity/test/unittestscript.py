@@ -1,10 +1,10 @@
 """Welcome to Brevity's primary test script.
 
 """
-
+import sys
+sys.path.insert(0, '.')
 import unittest
-import application as br
-import glob
+import brevity.application as br
 import datetime
 import tempfile
 
@@ -110,55 +110,35 @@ class ImportXMLTestCase(XMLTestCase):
     def runTest(self):
         ctrl_obj = self.d1
         im = br.Importer()
-        test_obj = im.import_from_xml('samples/reader_test.xml')
+        test_obj = im.import_from_xml('brevity/test/sample_docs/reader_test.xml')
         self.assertEqual(test_obj, ctrl_obj)
 
 
 class ExportXMLTestCase(XMLTestCase):
     """Verify zero data loss."""
     def runTest(self):
-        ctrl_obj = 'samples/reader_test.xml'
+        ctrl_obj = 'brevity/test/sample_docs/reader_test.xml'
         ex = br.ExporterDirector()
-        test_obj = 'export_test/' + str(datetime.datetime.now()) + '.xml'
+        test_obj = 'brevity/test/export_test/' + str(datetime.datetime.now()) + '.xml'
         ex.export_to_xml(self.d1, test_obj)
         with open(ctrl_obj, 'r') as x:
             with open(test_obj, 'r') as y:
                 self.assertEqual(x.read(), y.read())
 
 
-class RoundTripConstitutionTestCase(unittest.TestCase):
-    def runTest(self):
-        im = br.Importer()
-        ex = br.ExporterDirector()
-        a = im.import_from_xml('samples/constitution.xml')
-        b = ex.export_to_xml(a, 'constitution_' + str(datetime.datetime.now()) + '.xml')
-        with open('samples/constitution.xml', 'r') as x:
-            with open(b, 'r') as y:
-                for (a, b) in zip(x.readlines(), y.readlines()):
-                    if a != b:
-                        print 'sample: ' + a
-                        print 'test: ' + b
-                self.assertEqual(x.read(), y.read())
-
-
-class RoundTripXMLTestCase(unittest.TestCase):
-    """Try round-tripping every document in a test suite folder.
-    Include XML -> TXT/MD/LaTeX -> XML
-    and TXT/MD/LaTeX -> XML -> TXT/MD/LaTeX
-
-    """
-    pass
-    # def setUp(self):
-    #     self.xml_files = glob.glob('samples/*.xml')
-    #     self.im = br.Importer()
-    #     self.ex = br.ExporterDirector()
-    #     for doc in self.xml_files:
-    #         self.runTest(doc)
-
-    # def runTest(self, doc):
-    #     self.assertEqual(doc,
-    #                      self.ex.export_to_xml(self.im.import_from_xml(doc),
-    #                                            tempfile.TemporaryFile()))
+# class RoundTripConstitutionTestCase(unittest.TestCase):
+#     def runTest(self):
+#         im = br.Importer()
+#         ex = br.ExporterDirector()
+#         a = im.import_from_xml('brevity/test/sample_docs/constitution.xml')
+#         b = ex.export_to_xml(a, 'brevity/test/export_test/constitution_' + str(datetime.datetime.now()) + '.xml')
+#         with open('brevity/test/sample_docs/constitution.xml', 'r') as x:
+#             with open(b, 'r') as y:
+#                 # for (a, b) in zip(x.readlines(), y.readlines()):
+#                     # if a != b:
+#                         # print 'sample: ' + a
+#                         # print 'test: ' + b
+#                 self.assertEqual(x.read(), y.read())
 
 
 if __name__ == "__main__":

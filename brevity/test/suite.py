@@ -2,9 +2,10 @@
 
 import unittest
 import unittestscript
-import samples_docs.samples_docs_test
+import sample_docs.sample_docs_test as doc_suite
 
-suite = unittest.TestLoader()
-suite = suite.loadTestsFromNames(unittestscript,
-                                 samples_docs.samples_docs_test)
+testloader = unittest.TestLoader()
+suite = unittest.TestSuite()
+suite.addTests((testloader.loadTestsFromModule(unittestscript),
+               testloader.loadTestsFromModule(doc_suite)))
 unittest.TextTestRunner().run(suite)

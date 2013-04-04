@@ -36,8 +36,7 @@ class Socket(object):
     """
     socket_counter = 0
 
-    def __init__(self, format, text='', variables=dict(), link_this_node=None):
-        self.format = format
+    def __init__(self, text='', variables=dict(), link_this_node=None):
         self.text = text
         self.variables = variables
         if not self.link_node(link_this_node):
@@ -372,7 +371,7 @@ class Exporter(Builder):
         self.parent_stack = []
 
     def build_document(self, document):
-        #stack should be empty if we build_document is called (document is always top of the stack)
+        #stack should be empty if build_document is called (document should always be at the top of the stack)
         if self.parent_stack:
             raise ValueError
         self.root = etree.Element('document', document.variables)
