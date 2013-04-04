@@ -26,7 +26,6 @@ What we are making:
 - [x] unit testing
 - [x] refactor data structure and data manipulation classes to provide enough flexibility for future versions
 - [ ] amendment duality (simultaneously a standalone contract as well as an amending package)
-- [ ] Support markdown, .txt and LaTeX formats in parallel (strategy pattern for visitors)
 
 What we are learning:
 
@@ -45,6 +44,7 @@ What we are learning:
 - [ ] component versioning
 - [ ] agreement slicing
 - [ ] prototype web interface using Bootstrap
+- [ ] store text as latex, display as html, input as text, html, md, latex, etc...
 - [ ] prototype branding
 
 0.4 Make it nimble

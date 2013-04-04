@@ -17,6 +17,9 @@ import re
 from lxml import etree
 
 ##### DATA MODEL #####
+FORMAT_LATEX = 2
+FORMAT_MARKDOWN = 1
+FORMAT_TEXT = 0
 
 
 class Socket(object):
@@ -33,7 +36,8 @@ class Socket(object):
     """
     socket_counter = 0
 
-    def __init__(self, text='', variables=dict(), link_this_node=None):
+    def __init__(self, format, text='', variables=dict(), link_this_node=None):
+        self.format = format
         self.text = text
         self.variables = variables
         if not self.link_node(link_this_node):
@@ -45,7 +49,7 @@ class Socket(object):
         return 'Component type: %s \nText: %s \nDefault variables: %s \nLinked node? %s'\
             % (type(self), self.text, self.variables, self.linked_node)
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # does not consider formatting
         return self.text == other.text and\
             self.variables == other.variables and\
             self.linked_node == other.linked_node
@@ -277,6 +281,12 @@ class Compiler(object):
 
     def repl(self, key):
         return self.variables[key.group(1)]
+
+
+class Printer(object):
+    """Interface to latex command line utilities.
+
+    """
 
 
 class Importer(object):

@@ -1,0 +1,25 @@
+<document>
+    <node>
+        <socket item1="bialy" item2="cream cheese">
+            This Sunday we are going to get a A{item1} with A{item2} for lunch.
+        </socket>
+        <socket location1="New York City" store1="Kossar's">
+            I think A{store1} has the best A{item1} in A{location1}.
+            <node>
+                <socket location1="world" store1="Kossar's">
+                    I think A{store1} has the best A{item1} in the entire A{location1}!
+                </socket>
+            </node>
+        </socket>
+    </node>
+    <node>
+        <socket item3="goat" store2="Russ and Daughter's">
+            The A{item2} will be from A{store2}. They have great A{item3} A{item2}.
+        </socket>
+    </node>
+    <node>
+        <socket event1="Passover" item4="chopped liver">
+            We will also pick up some A{item4} for A{event1}.
+        </socket>
+    </node>
+</document>

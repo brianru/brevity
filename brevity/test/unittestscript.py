@@ -1,21 +1,13 @@
 """Welcome to Brevity's primary test script.
-There are 2 test suites:
-    1) unit test suite
-        Static list of explicitly defined test cases.
-    2) application test suite
-        Dynamic list of test cases implicitly defined by the contents of the 'samples/' directory.
+
 """
 
-
-import pdb
 import unittest
 import application as br
 import glob
 import datetime
 import tempfile
 
-
-##### UNIT TESTS #####
 
 class BadInputTestCase(unittest.TestCase):
     """Ensure application crashesnand burns immediately when fed bad inputs."""
