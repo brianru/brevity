@@ -90,6 +90,14 @@ class DataTraversalTestCase(unittest.TestCase):
             self.assertFalse(self.components)
 
 
+class AmendmentComparisonTestCase(unittest.TestCase):
+    def runTest(self):
+        a1 = br.Amendment([1], 1, 2)
+        a2 = br.Amendment([1], 0, 1)
+        self.assertFalse(a1 == a2)
+        self.assertTrue(a1 != a2)
+
+
 class XMLTestCase(unittest.TestCase):
     def setUp(self):
         self.s1 = br.Socket('This Sunday we are going to get a A{item1} with A{item2} for lunch.', {'item1': 'bialy', 'item2': 'cream cheese'})
@@ -124,21 +132,6 @@ class ExportXMLTestCase(XMLTestCase):
         with open(ctrl_obj, 'r') as x:
             with open(test_obj, 'r') as y:
                 self.assertEqual(x.read(), y.read())
-
-
-# class RoundTripConstitutionTestCase(unittest.TestCase):
-#     def runTest(self):
-#         im = br.Importer()
-#         ex = br.ExporterDirector()
-#         a = im.import_from_xml('brevity/test/sample_docs/constitution.xml')
-#         b = ex.export_to_xml(a, 'brevity/test/export_test/constitution_' + str(datetime.datetime.now()) + '.xml')
-#         with open('brevity/test/sample_docs/constitution.xml', 'r') as x:
-#             with open(b, 'r') as y:
-#                 # for (a, b) in zip(x.readlines(), y.readlines()):
-#                     # if a != b:
-#                         # print 'sample: ' + a
-#                         # print 'test: ' + b
-#                 self.assertEqual(x.read(), y.read())
 
 
 if __name__ == "__main__":

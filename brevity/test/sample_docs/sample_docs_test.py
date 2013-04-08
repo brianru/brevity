@@ -53,7 +53,11 @@ class RoundTripXMLTest(ParametrizedTestCase):
                 else:
                     with open('brevity/test/logs/%s.txt' % (datetime.datetime.now()), 'w') as f:
                         for (i, j, k) in log:
-                            f.write('%s:\n%s\n%s\n' % (i, j[:-1], k[:-1]))
+                            if j[-1] == '\n':
+                                j = j[:-1]
+                            if k[-1] == '\n':
+                                k = k[:-1]
+                            f.write('%s:\n%s\n%s\n' % (i, j, k))
                 y.seek(0)
                 self.assertEqual(x.read(), y.read())
 

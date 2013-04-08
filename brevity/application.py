@@ -9,7 +9,8 @@ A tool for...
 Provides a proprietary data structure that promotes internal consistency of
 documents and clause interoperability across contracts of varying purposes.
 Data structure is round-trip convertible into XML while supporting plain text,
-markdown, and LaTeX formatting.
+markdown, HTML and LaTeX formatting.
+
 """
 
 # import pdb
@@ -124,7 +125,12 @@ class Document(object):
         self.__class__.document_counter += 1
 
     def __str__(self):
-        return 'Component type: %s \nNumber of nodes: %s \nDictionary: %s' % (type(self), len(self.nodes), '\n'.join(self.variables))
+        return 'Component type: %s \n'\
+               'Number of nodes: %s \n'\
+               'Dictionary: %s' %\
+               (type(self),
+               len(self.nodes),
+               '\n'.join(self.variables))
 
     def __eq__(self, other):
         return self.nodes == other.nodes and self.variables == other.variables
@@ -136,7 +142,68 @@ class Document(object):
         visitor.visit_document(self)
 
 
-##### BUSINESS LOGIC #####
+class Amendment(Document):
+    def __init__(self, nodes, old_node, new_node, variables=dict()):
+        super(Amendment, self).__init__(nodes, variables)
+        self.old_node = old_node
+        self.new_node = new_node
+
+    def __str__(self):
+        # return ('Compnent type: %s\n'
+        #         'Number of nodes: %s\n') % (type(self, ...))
+        return 'Component type: %s \n'\
+               'Number of nodes: %s \n'\
+               'Node being deleted: %s \n'\
+               'Node replacing deleted node: %s \n'\
+               'Dictionary: %s' %\
+               (type(self),
+               len(self.nodes),
+               self.old_node,
+               self.new_node,
+               '\n'.join(self.variables))
+
+    def __eq__(self, other):
+        return self.old_node == other.old_node and\
+            self.new_node == other.new_node and\
+            super(Document, self).__eq__(other)
+
+    def accept(self, visitor):
+        visitor.visit_amendment(self)
+
+
+class Agreement(object):
+    def __init__(self, documents):
+        self.documents = documents
+
+    def __str__(self):
+        return 'Component type: %s \n'\
+               'Number of documents %s \n' %\
+               (type(self),
+                len(self.documents))
+
+    def __eq__(self, other):
+        return self.documents == other.documents
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __getslice__(self, start, end):
+        return self.documents[start:end]
+
+    def __setslice__(self, start, end, value):
+        self.documents[start:end] = value
+        # confirm interface / implementation is consistent
+
+    def __delslice__(self, start, end):
+        del(self.documents[start:end])
+        # confirm interface / implementation is consistent
+
+    def _slice_from_date(self, start, end):
+        pass
+
+    def accept(self, visitor):
+        visitor.visit_agreement(self)
+
 
 class Visitor(object):
     """Visitor pattern is used when actions differ by component type and the component type is not reliably known by the requestor.
@@ -149,6 +216,12 @@ class Visitor(object):
         pass
 
     def visit_document(self, document):
+        pass
+
+    def visit_amendment(self, amendment):
+        pass
+
+    def visit_agreement(self, agreement):
         pass
 
 
@@ -164,35 +237,46 @@ class TraversalVisitor(Visitor):
     # cannot return generator directly until later version of python
     # see PEP 380
     def visit_document(self, document):
-        self.generator = doc_gen(document)
+        self.generator = _doc_gen(document)
+
+    def visit_amendment(self, amendment):
+        self.generator = _doc_gen(amendment)
 
     def visit_node(self, node):
-        self.generator = node_gen(node)
+        self.generator = _node_gen(node)
 
     def visit_socket(self, socket):
-        self.generator = sock_gen(socket)
+        self.generator = _sock_gen(socket)
 
 
 ## GENERATORS ##
 # rename using underscores to indicate these are internal methods
-def doc_gen(doc):
+def _agrmt_gen(agreement):
+    yield agreement
+    for doc in agreement.documents:
+        for node in doc.nodes:
+            for socket in _node_gen(node):
+                yield socket
+
+
+def _doc_gen(doc):
     yield doc
     for node in doc.nodes:
-        for socket in node_gen(node):
+        for socket in _node_gen(node):
             yield socket
 
 
-def node_gen(node):
+def _node_gen(node):
     yield node
     for socket in node.sockets:
-        for item in sock_gen(socket):
+        for item in _sock_gen(socket):
             yield item
 
 
-def sock_gen(socket):
+def _sock_gen(socket):
     yield socket
     if socket.linked_node is not None:
-        for socket in node_gen(socket.linked_node):
+        for socket in _node_gen(socket.linked_node):
             yield socket
 
 
@@ -210,9 +294,7 @@ class ConstructionDirectorVisitor(Visitor):
         return self.builder.raw_text, self.builder.variables
 
     def visit_socket(self, socket):
-        if socket.linked_node is not None:
-            pass
-        else:
+        if socket.linked_node is None:
             self.builder.build_socket(socket)
 
     def visit_node(self, node):
@@ -220,6 +302,12 @@ class ConstructionDirectorVisitor(Visitor):
 
     def visit_document(self, document):
         self.builder.build_document(document)
+
+    def visit_amendment(self, amendment):
+        self.builder.build_amendment()
+
+    def visit_agreement(self, agreement):
+        self.builder.build_agreement()
 
 
 class Builder(object):
@@ -231,6 +319,12 @@ class Builder(object):
         pass
 
     def build_document(self, document):
+        pass
+
+    def build_amendment(self, amendment):
+        pass
+
+    def build_agreement(self, agreement):
         pass
 
 
@@ -254,6 +348,9 @@ class ConstructionBuilder(Builder):
     def build_document(self, document):
         self.variables = document.variables
 
+    def build_agreement(self, agreement):
+        """Identify a master set of nodes then build from there."""
+
 
 class Compiler(object):
     """Inserts variable values into text.
@@ -269,6 +366,8 @@ class Compiler(object):
         try:
             return re.sub(r'A{(\w.*?)}', self.repl, text)
         except KeyError as e:
+            # rework as loop through each match,
+            #aggregating errors for improved debugging
             print 'key is not defined in variable dictionary: '\
                   + e.message
             return False
@@ -281,6 +380,20 @@ class Printer(object):
     """Interface to latex command line utilities.
 
     """
+    def print_to_text(self, text):
+        pass
+
+    def print_to_html(self, text):
+        pass
+
+    def print_to_pdf(self, text):
+        pass
+
+    def print_to_md(self, text):
+        pass
+
+    def _print(self, text, outputformat):
+        pass
 
 
 class Importer(object):
@@ -299,7 +412,7 @@ class Importer(object):
         #Route flow to proper factory method
         #is there any way to implement a Visitor class based on the element attributes?
         #maybe something I can subclass? or some weird hack of dunder methods?
-        if self.root.tag == 'document':
+        if self.root.tag == 'document' or self.root.tag == 'amendment':
             return self.doc_factory(self.root)
         elif self.root.tag == 'node':
             return self.node_factory(self.root)
@@ -348,6 +461,9 @@ class ExporterDirector(Visitor):
 
     def visit_document(self, document):
         self.b.build_document(document)
+
+    def visit_amendment(self, amendment):
+        self.b.build_document(amendment)
 
     def visit_node(self, node):
         self.b.build_node(node)
