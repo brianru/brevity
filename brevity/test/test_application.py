@@ -11,6 +11,15 @@ from google.appengine.ext import ndb
 from google.appengine.ext import testbed
 
 ### TEST WALKING SKELETON ###
+class MainPageTestCase(unittest.TestCase):
+    def setUp(self):
+        self.testapp = webtest.TestApp(br.application)
+
+    def runTest(self):
+        response = self.testapp.get('/')
+        self.assertEqual(response.status_int, 200)
+        self.assertEqual(response.content_type, 'text/html')
+
 class DisplayObjectOnWebTestCase(unittest.TestCase):
     """Store an object in NDB.
     Pass the object key through the url. https://developers.google.com/appengine/docs/python/ndb/keyclass#Key_urlsafe
@@ -35,7 +44,7 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
         self.assertEqual(self.key, ndb.Key(urlsafe=self.key.urlsafe()))  # parse response
         self.assertEqual(response.status_int, 200)
         self.assertIn(self.test_employee.text, response.normal_body)
-        self.assertEqual(response.content_type, 'text/plain')
+        self.assertEqual(response.content_type, 'text/html')
 
     def tearDown(self):
         self.testbed.deactivate()
