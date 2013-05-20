@@ -37,6 +37,9 @@ What we are learning:
 - parsing xml
 - debugging with pdb
 - file manipulation
+- test driven development
+- 
+
 
 0.3 Make it last
 ----------------

@@ -12,22 +12,43 @@ class Socket(ndb.Model):
 
 class Node(ndb.Model):
     pass
+#    sockets = 
 
 class Document(ndb.Model):
     pass
+#    nodes = []
+#    variables = 
 
-class Amendment(ndb.Model):
+class Amendment(Document):
     pass
+#    old_obj = ndb.Key()
+#    new_obj = ndb.Key()
 
 class Agreement(ndb.Model):
     pass
+#    documents = []
+#    other meta data (status, dates and stuff)
 
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.headers['Content-Type'] = 'text/html'
+        # header
+        # footer
+        # body
+        # response = header + body + footer
         self.response.write('Hello, webapp2 World!')
 
-application = webapp2.WSGIApplication([('/', MainPage)],
-                                      debug=True)
+class ViewPage(webapp2.RequestHandler):
+
+    def get(self, url_safe_key):
+        self.response.headers['Content-Type'] = 'text/plain'
+        self.response.write(str(self.objectFromURLSafeKey(url_safe_key)))
+
+    def objectFromURLSafeKey(self, url_safe_key):
+        raw_key = ndb.Key(urlsafe=url_safe_key)
+        return raw_key.get() 
+
+application = webapp2.WSGIApplication([(r'/', MainPage),
+                                       (r'/view/(.*)', ViewPage)], debug=True)
 
