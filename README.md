@@ -38,7 +38,8 @@ What we are learning:
 - debugging with pdb
 - file manipulation
 - test driven development
-- 
+- google app engine / webapp2 / webtest / ndb
+- bootstrap
 
 
 0.3 Make it last

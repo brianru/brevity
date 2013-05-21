@@ -4,15 +4,10 @@ import webapp2
 
 from google.appengine.ext import ndb
 
-class Socket(ndb.Model):
+class Agreement(ndb.Model):
     pass
-#    text = ndb.StringProperty()
-#    variables = ndb.Key()  # reference ndb.Expando object
-#    linked_node = ndb.Key()  # refernces a Node or Null
-
-class Node(ndb.Model):
-    pass
-#    sockets = 
+#    documents = []
+#    other meta data (status, dates and stuff)
 
 class Document(ndb.Model):
     pass
@@ -24,10 +19,14 @@ class Amendment(Document):
 #    old_obj = ndb.Key()
 #    new_obj = ndb.Key()
 
-class Agreement(ndb.Model):
+class Node(ndb.Model):
     pass
-#    documents = []
-#    other meta data (status, dates and stuff)
+#    socket = ndb.KeyProperty(kind=Socket, repeated=True)
+
+class Socket(ndb.Model):
+    text = ndb.StringProperty()
+    variables = ndb.JsonProperty()
+    linked_node = ndb.StructuredProperty(Node)
 
 class MainPage(webapp2.RequestHandler):
 
@@ -81,4 +80,6 @@ class ViewPage(webapp2.RequestHandler):
 
 application = webapp2.WSGIApplication([(r'/', MainPage),
                                        (r'/view/(.*)', ViewPage)], debug=True)
+                                    #  (r'/edit/(.*)', EditPage),
+                                    #  (r'/create/', CreatePage),
 

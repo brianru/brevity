@@ -9,6 +9,7 @@ import webapp2
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.appengine.ext import testbed
+from google.appengine.ext import db
 
 ### TEST WALKING SKELETON ###
 class MainPageTestCase(unittest.TestCase):
@@ -21,9 +22,11 @@ class MainPageTestCase(unittest.TestCase):
         self.assertEqual(response.content_type, 'text/html')
 
 class DisplayObjectOnWebTestCase(unittest.TestCase):
-    """Store an object in NDB.
-    Pass the object key through the url. https://developers.google.com/appengine/docs/python/ndb/keyclass#Key_urlsafe
-    (/key=___)
+    """Tests /view/(.*)
+    1) setUp testbed and testapp
+    2) generate___ForWeb() create sample object and place in ndb
+    3) call web and make assertions on response
+    Store an object in NDB.
     Access and display object using key from url.
 
     """
@@ -46,6 +49,28 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
         self.assertIn(self.test_employee.text, response.normal_body)
         self.assertEqual(response.content_type, 'text/html')
 
+    def displayDataModelOnWeb(self):
+        self.displaySocketOnWeb()
+        self.displayNodeOnWeb()
+        self.displayDocumentOnWeb()
+        self.displayAmendmentOnWeb()
+        self.displayAgreementOnWeb()
+    
+    def displaySocketOnWeb(self):
+        pass
+
+    def displayNodeOnWeb(self):
+        pass
+
+    def displayDocumentOnWeb(self):
+        pass
+
+    def displayAmendmentOnWeb(self):
+        pass
+
+    def displayAgreementOnWeb(self):
+        pass
+
     def tearDown(self):
         self.testbed.deactivate()
 
@@ -65,6 +90,10 @@ class ReadAndWriteFromNDBTestCase(unittest.TestCase):
         self.testbed.init_memcache_stub()
 
     def runTest(self):
+        self.testWithSampleClass()
+        self.testWithDataModel()
+
+    def testWithSampleClass(self):
         test_text = 'I am a banana!'
         class Employee(ndb.Model):
             text = ndb.StringProperty()
@@ -74,19 +103,98 @@ class ReadAndWriteFromNDBTestCase(unittest.TestCase):
         test_employee.text = 'My spoon is too big!'
         test_employee.put()
         self.assertEquals('My spoon is too big!', test_key.get().text)
-        test_employee.price = len(test_employee.text)
+        test_employee.text_length = len(test_employee.text)
         test_employee.put()
-        self.assertEquals(len('My spoon is too big!'), test_key.get().price)
+        self.assertEquals(len('My spoon is too big!'), test_key.get().text_length)
+
+    def testWithDataModel(self):
+        self.testWithSocket()
+        self.testWithNode()
+        self.testWithDocument()
+        self.testWithAmendment()
+        self.testWithAgreement()
+
+    def testWithSocket(self):
+        test_socket = br.Socket(text='I am a ${fruit}!', variables={'fruit': 'banana'})
+        test_socket_key = test_socket.put()
+        self.assertEquals(test_socket_key.get(), test_socket)
+        test_socket.variables = {'fruit': 'apple'}
+        test_socket.put()
+        self.assertEquals(test_socket_key.get(), test_socket)
+
+    def testWithNode(self):
+        pass 
+
+    def testWithDocument(self):
+        pass
+
+    def testWithAmendment(self):
+        pass
+
+    def testWithAgreement(self):
+        pass
 
     def tearDown(self):
         self.testbed.deactivate()
 
-### GENERAL UNIT TESTS ###
-class StoreDataModelInNDBTestCase(unittest.TestCase):
-    pass
+class ConsistentCompleteDataModelTestCase(unittest.TestCase):
+    """Verify data model ensures data is well-formed (i.e. consistent and complete).
+    1) Assign sample object contents to local variables.
+    2) Instantiate component instance with sample object contents.
+    3) Assert contents of component instance equals sample object contents.
+    4) Validate obja == objb iff obja.contents == objb.contents
+    5) Test content type restrictions raise expected exceptions.
+    """
+    def runTest(self):
+        self.testSocket()
+        self.testNode()
+        self.testDocument()
+        self.testAmendment()
+        self.testAgreement()
 
-class DisplayDataModelOnWebTestCase(unittest.TestCase):
-    pass
+    def testSocket(self):
+        # 1
+        test_text = 'I am a ${fruit}.'
+        test_variables = {'fruit': 'banana'}
+        # 2
+        test_socket = br.Socket(text=test_text, variables=test_variables)
+        # 3
+        self.assertEquals(test_socket.text, test_text)
+        self.assertEquals(test_socket.variables, test_variables)
+        self.assertEquals(test_socket.linked_node, None)
+        #4
+        self.assertEquals(test_socket, br.Socket(text=test_text,
+                                                 variables=test_variables))
+        self.assertNotEquals(test_socket, br.Socket(text='',
+                                                    variables=test_variables))
+        self.assertNotEquals(test_socket, br.Socket(text=test_text,
+                                                    variables=None))
+        self.assertNotEquals(test_socket, br.Socket(text=test_text,
+                                                    variables=test_variables,
+                                                    linked_node=br.Node()))
+        # 5
+        self.assertRaises(db.BadValueError, lambda: br.Socket(text=test_text,
+                                                      variables=test_variables,
+                                                      linked_node=0))
+
+    def testNode(self):
+        pass
+
+    def testDocument(self):
+        pass
+
+    def testAmendment(self):
+        pass
+
+    def testAgreement(self):
+        pass
+
+class ViewPageTestCase(unittest.TestCase):
+    """Verifies all data in objects is available as text in the object's "ViewPage"."""
+    def setUp(self):
+        """Setup webtest fixture."""
+    def runTest(self):
+        """For each component, call get(/view/___) and asset on contents of response."""
 
 class ModifyDataModelFromWebTestCase(unittest.TestCase):
     pass
