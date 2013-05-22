@@ -1,6 +1,7 @@
 import sys
 sys.path.insert(0, '.')  # add parent folder to path list
 
+import logging
 import unittest
 import application as br
 import webtest
@@ -35,13 +36,18 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
+        self.testapp = webtest.TestApp(br.application)
+
+    def runTest(self):
+        self.displaySampleClassOnWeb()
+        self.displayDataModelOnWeb()
+
+    def displaySampleClassOnWeb(self):
         class Employee(ndb.Model):
             text = ndb.StringProperty()
         self.test_employee = Employee(text='I am a banana!')
         self.key = self.test_employee.put()
-        self.testapp = webtest.TestApp(br.application)
 
-    def runTest(self):
         test_object_url = '/view/' + self.key.urlsafe()
         response = self.testapp.get(test_object_url)
         self.assertEqual(self.key, ndb.Key(urlsafe=self.key.urlsafe()))  # parse response
@@ -57,19 +63,26 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
         self.displayAgreementOnWeb()
     
     def displaySocketOnWeb(self):
-        pass
+        self.test_socket = br.Socket(text='I am a ${fruit}!', variables={'fruit': 'banana'})
+        self.test_socket_key = self.test_socket.put()
+        
+        response = self.testapp.get('/view/' + self.test_socket_key.urlsafe())
+        self.assertEqual(response.status_int, 200)
+        self.assertIn(self.test_socket.text, response.normal_body)
+        self.assertIn(str(self.test_socket.variables), response.normal_body)
+        self.assertEqual(response.content_type, 'text/html')
 
     def displayNodeOnWeb(self):
-        pass
+        self.assertEquals(0, 1)
 
     def displayDocumentOnWeb(self):
-        pass
+        self.assertEquals(0, 1)
 
     def displayAmendmentOnWeb(self):
-        pass
+        self.assertEquals(0, 1)
 
     def displayAgreementOnWeb(self):
-        pass
+        self.assertEquals(0, 1)
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -123,16 +136,16 @@ class ReadAndWriteFromNDBTestCase(unittest.TestCase):
         self.assertEquals(test_socket_key.get(), test_socket)
 
     def testWithNode(self):
-        pass 
+        self.assertEquals(0, 1)
 
     def testWithDocument(self):
-        pass
+        self.assertEquals(0, 1)
 
     def testWithAmendment(self):
-        pass
+        self.assertEquals(0, 1)
 
     def testWithAgreement(self):
-        pass
+        self.assertEquals(0, 1)
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -178,23 +191,16 @@ class ConsistentCompleteDataModelTestCase(unittest.TestCase):
                                                       linked_node=0))
 
     def testNode(self):
-        pass
+        self.assertEquals(0, 1)
 
     def testDocument(self):
-        pass
+        self.assertEquals(0, 1)
 
     def testAmendment(self):
-        pass
+        self.assertEquals(0, 1)
 
     def testAgreement(self):
-        pass
-
-class ViewPageTestCase(unittest.TestCase):
-    """Verifies all data in objects is available as text in the object's "ViewPage"."""
-    def setUp(self):
-        """Setup webtest fixture."""
-    def runTest(self):
-        """For each component, call get(/view/___) and asset on contents of response."""
+        self.assertEquals(0, 1)
 
 class ModifyDataModelFromWebTestCase(unittest.TestCase):
     pass

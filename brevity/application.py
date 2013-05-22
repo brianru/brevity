@@ -72,7 +72,10 @@ class ViewPage(webapp2.RequestHandler):
     
     def get(self, url_safe_key):
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.write(self.VIEW_PAGE_HTML % (self.objectFromURLSafeKey(url_safe_key)))
+        if url_safe_key is not '':
+            self.response.write(self.VIEW_PAGE_HTML % (self.objectFromURLSafeKey(url_safe_key)))
+        else:
+            self.response.write(self.VIEW_PAGE_HTML % ('Explore Brevity!'))
 
     def objectFromURLSafeKey(self, url_safe_key):
         raw_key = ndb.Key(urlsafe=url_safe_key)
