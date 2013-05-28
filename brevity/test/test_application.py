@@ -10,10 +10,45 @@ import webapp2
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.appengine.ext import testbed
-from google.appengine.ext import db
+from google.appengine.ext import db  # included for db.BadValueError exception
 
-### TEST WALKING SKELETON ###
-class MainPageTestCase(unittest.TestCase):
+
+class RandomDataGeneratorTestCase(unittest.TestCase):
+    """Verify helper methods create valid test data.
+    Other methods are factory methods.
+    Factory methods should be moved to a SampleData factory class in production code.
+    
+    """
+    def setUp(self):
+        self.dataGenerator = br.RandomDataGenerator()
+        self.SAMPLE_SIZE = 3
+    
+    def runTest(self):
+        """1) Random text -> dictionary values from text
+        2) Random text -> dictionary keys and values from text
+
+        """
+        self.assertEquals(len(self.dataGenerator.randomText(self.SAMPLE_SIZE).splitlines()),
+                          self.SAMPLE_SIZE)
+        testVariableKeys = self.dataGenerator.randomVariableKeys(self.SAMPLE_SIZE)
+        self.assertEquals(len(testVariableKeys), self.SAMPLE_SIZE)
+        self.assertIn(testVariableKeys,
+                      self.dataGenerator.randomTextWithVariables(testVariableKeys))
+        self.assertEquals(len(self.dataGenerator.randomDictionary(self.SAMPLE_SIZE)),
+                          self.SAMPLE_SIZE)
+
+
+class SampleObjectFactoryTestCase(unittest.TestCase):
+    """Ensure this class does not overlap with ConsistentAndCompleteDataModelTestCase.
+
+    """
+    def setUp(self):
+        pass
+
+    def runTest(self):
+        pass
+
+class LoadMainPageTestCase(unittest.TestCase):
     def setUp(self):
         self.testapp = webtest.TestApp(br.application)
 
@@ -65,24 +100,27 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
     def displaySocketOnWeb(self):
         self.test_socket = br.Socket(text='I am a ${fruit}!', variables={'fruit': 'banana'})
         self.test_socket_key = self.test_socket.put()
-        
         response = self.testapp.get('/view/' + self.test_socket_key.urlsafe())
         self.assertEqual(response.status_int, 200)
         self.assertIn(self.test_socket.text, response.normal_body)
         self.assertIn(str(self.test_socket.variables), response.normal_body)
         self.assertEqual(response.content_type, 'text/html')
 
+    @unittest.skip("Stub")
     def displayNodeOnWeb(self):
-        self.assertEquals(0, 1)
+        pass
 
+    @unittest.skip("Stub")
     def displayDocumentOnWeb(self):
-        self.assertEquals(0, 1)
+        pass
 
+    @unittest.skip("Stub")
     def displayAmendmentOnWeb(self):
-        self.assertEquals(0, 1)
+        pass
 
+    @unittest.skip("Stub")
     def displayAgreementOnWeb(self):
-        self.assertEquals(0, 1)
+        pass
 
     def tearDown(self):
         self.testbed.deactivate()
@@ -135,22 +173,26 @@ class ReadAndWriteFromNDBTestCase(unittest.TestCase):
         test_socket.put()
         self.assertEquals(test_socket_key.get(), test_socket)
 
+    @unittest.skip("Test")
     def testWithNode(self):
-        self.assertEquals(0, 1)
+        pass
 
+    @unittest.skip("Test")
     def testWithDocument(self):
-        self.assertEquals(0, 1)
+        pass
 
+    @unittest.skip("Stub")
     def testWithAmendment(self):
-        self.assertEquals(0, 1)
+        pass
 
+    @unittest.skip("Stub")
     def testWithAgreement(self):
-        self.assertEquals(0, 1)
+        pass
 
     def tearDown(self):
         self.testbed.deactivate()
 
-class ConsistentCompleteDataModelTestCase(unittest.TestCase):
+class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
     """Verify data model ensures data is well-formed (i.e. consistent and complete).
     1) Assign sample object contents to local variables.
     2) Instantiate component instance with sample object contents.
@@ -189,29 +231,36 @@ class ConsistentCompleteDataModelTestCase(unittest.TestCase):
         self.assertRaises(db.BadValueError, lambda: br.Socket(text=test_text,
                                                       variables=test_variables,
                                                       linked_node=0))
-
+    @unittest.skip("Stub")
     def testNode(self):
-        self.assertEquals(0, 1)
+        pass
 
+    @unittest.skip("Stub")
     def testDocument(self):
-        self.assertEquals(0, 1)
+        pass
 
+    @unittest.skip("Stub")
     def testAmendment(self):
-        self.assertEquals(0, 1)
-
+        pass
+    
+    @unittest.skip("Stub")
     def testAgreement(self):
-        self.assertEquals(0, 1)
+        pass
 
-class ModifyDataModelFromWebTestCase(unittest.TestCase):
+@unittest.skip("Stub")
+class ModifyDataFromWebTestCase(unittest.TestCase):
     pass
 
+@unittest.skip("Stub")
 class CreateDataFromWebTestCase(unittest.TestCase):
     pass
 
-class ExportDataFromWebTestCase(unittest.TestCase):
+@unittest.skip("Stub")
+class ExportDataFromWebToXMLTestCase(unittest.TestCase):
     pass
 
-class ImportDataToWebTestCase(unittest.TestCase):
+@unittest.skip("Stub")
+class ImportDataFromXMLToWebTestCase(unittest.TestCase):
     pass
 
 

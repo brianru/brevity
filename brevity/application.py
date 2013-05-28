@@ -20,13 +20,62 @@ class Amendment(Document):
 #    new_obj = ndb.Key()
 
 class Node(ndb.Model):
-    pass
-#    socket = ndb.KeyProperty(kind=Socket, repeated=True)
+    socket = ndb.KeyProperty(repeated=True)
 
 class Socket(ndb.Model):
     text = ndb.StringProperty()
     variables = ndb.JsonProperty()
     linked_node = ndb.StructuredProperty(Node)
+
+class RandomDataGenerator(object):
+    def __init__(self):
+        self.text_source = '/test/mobydick.txt'
+        self.key_source = ''
+
+    def randomText(self, numberOfLines):
+        return ''
+
+    def randomDictionary(self):
+        return {'a': 0}
+
+    def randomVariableKeys(self, numberOfKeys):
+        return ['a', 'b', 'c']
+    
+    def randomDictionaryFromKeys(self, keys):
+        return dict(zip(keys, 0))
+
+class SampleObjectFactory(object):
+    def __init__(self):
+        self.dataGenerator = RandomDataGenerator()
+    
+    def objectsWithSingleModifications(self, original_object, property_list):
+        """For each property in original_object,
+        return a new object with that property modified.
+        
+        """
+
+    def randomSocket(self):
+        return br.Socket(text=self._randomText(),
+                         variables=self.testDataGenerator.randomDictionary,
+                         linked_node=None)
+
+    def randomSocketWithVariableKeys(self, variable_keys):
+        return br.Socket(text=self._randomText(),
+                         variables=self.testDataGenerator.randomDictionaryFromVariableKeys(variable_keys),
+                         linked_node=None)
+
+    def randomNode(self):
+        return br.Node(socket=[self.randomSocket() for x in xrange(0, self.SAMPLE_SIZE)])
+
+    def randomDocument(self):
+        pass
+    #   return br.Document(node=[self.randomNode() for x in xrange(0,3)])
+
+    def randomAmendment(self):
+        pass
+
+    def randomAgreement(self):
+        pass
 
 class MainPage(webapp2.RequestHandler):
 
