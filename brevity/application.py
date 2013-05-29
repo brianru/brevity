@@ -1,7 +1,9 @@
 """Brevity: TDD Edition"""
 
 import webapp2
-
+import copy
+import random
+import sys
 from google.appengine.ext import ndb
 
 class Agreement(ndb.Model):
@@ -29,39 +31,48 @@ class Socket(ndb.Model):
 
 class RandomDataGenerator(object):
     def __init__(self):
-        self.text_source = '/test/mobydick.txt'
-        self.key_source = ''
+        with open('test/mobydick.txt', 'r') as f:
+            self.sample_text = f.readlines()
+        with open('test/nounlist.txt', 'r') as f:
+            self.noun_list = f.readlines()
 
     def randomText(self, numberOfLines):
-        return ''
+            return str([random.choice(self.sample_text)
+                    for x in xrange(0,numberOfLines)])
 
-    def randomDictionary(self):
-        return {'a': 0}
+    def randomDictionary(self, size):
+        return self.randomDictionaryFromKeys(self.randomVariableKeys(size))
 
     def randomVariableKeys(self, numberOfKeys):
-        return ['a', 'b', 'c']
+        return [random.randint(0,sys.maxint) for x in xrange(0,numberOfKeys)]
     
     def randomDictionaryFromKeys(self, keys):
-        return dict(zip(keys, 0))
+        return dict(zip(keys, random.choice(self.noun_list))) 
+
+    def randomlyModify(self, original_object):
+        return 0
 
 class SampleObjectFactory(object):
     def __init__(self):
         self.dataGenerator = RandomDataGenerator()
     
-    def objectsWithSingleModifications(self, original_object, property_list):
+    def objectsWithSingleModifications(self, original_object):
         """For each property in original_object,
         return a new object with that property modified.
         
         """
+        return [copy.copy(original_object).__setattr__(var,
+                                                       self.dataGenerator.randomlyModify(var))
+                for var in original_object._values]
 
     def randomSocket(self):
         return br.Socket(text=self._randomText(),
                          variables=self.testDataGenerator.randomDictionary,
                          linked_node=None)
 
-    def randomSocketWithVariableKeys(self, variable_keys):
-        return br.Socket(text=self._randomText(),
-                         variables=self.testDataGenerator.randomDictionaryFromVariableKeys(variable_keys),
+    def randomSocketFromKeys(self, keys):
+        return br.Socket(text=self.randomText(),
+                         variables=self.testDataGenerator.randomDictionaryFromKeys(keys),
                          linked_node=None)
 
     def randomNode(self):

@@ -32,8 +32,6 @@ class RandomDataGeneratorTestCase(unittest.TestCase):
                           self.SAMPLE_SIZE)
         testVariableKeys = self.dataGenerator.randomVariableKeys(self.SAMPLE_SIZE)
         self.assertEquals(len(testVariableKeys), self.SAMPLE_SIZE)
-        self.assertIn(testVariableKeys,
-                      self.dataGenerator.randomTextWithVariables(testVariableKeys))
         self.assertEquals(len(self.dataGenerator.randomDictionary(self.SAMPLE_SIZE)),
                           self.SAMPLE_SIZE)
 
@@ -43,9 +41,37 @@ class SampleObjectFactoryTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        pass
+        self.objectFactory = br.SampleObjectFactory()
+        self.dataGenerator = br.RandomDataGenerator()
+        self.test_socket = br.Socket(text=self.dataGenerator.randomText(3),
+                                     variables=self.dataGenerator.randomDictionary(3))
 
     def runTest(self):
+        self.testSocketFactory()
+        self.testNodeFactory()
+        self.testDocumentFactory()
+        self.testAmendmentFactory()
+        self.testAgreementFactory()
+
+    def testSocketFactory(self):
+        sample_with_variations = self.objectFactory.objectsWithSingleModifications(self.test_socket).append(self.test_socket)
+        print('\nsample with variations: \n %s' % (sample_with_variations))
+        self.assertEquals(sample_with_variations, list(set(sample_with_variations)))
+
+    @unittest.skip("Stub")
+    def testNodeFactory(self):
+        pass
+
+    @unittest.skip("Stub")
+    def testDocumentFactory(self):
+        pass
+
+    @unittest.skip("Stub")
+    def testAmendmentFactory(self):
+        pass
+
+    @unittest.skip("Stub")
+    def testAgreementFactory(self):
         pass
 
 class LoadMainPageTestCase(unittest.TestCase):
@@ -228,9 +254,10 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
                                                     variables=test_variables,
                                                     linked_node=br.Node()))
         # 5
-        self.assertRaises(db.BadValueError, lambda: br.Socket(text=test_text,
-                                                      variables=test_variables,
-                                                      linked_node=0))
+        self.assertRaises(db.BadValueError, lambda: br.Socket(text=0))
+        self.assertRaises(db.BadValueError, lambda: br.Socket(variables=0))
+        self.assertRaises(db.BadValueError, lambda: br.Socket(linked_node=0))
+
     @unittest.skip("Stub")
     def testNode(self):
         pass
