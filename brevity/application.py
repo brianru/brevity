@@ -7,19 +7,17 @@ import sys
 from google.appengine.ext import ndb
 
 class Agreement(ndb.Model):
-    pass
-#    documents = []
-#    other meta data (status, dates and stuff)
+    document = ndb.KeyProperty(repeated=True)
+    meta_data = ndb.JsonProperty()
+    # other meta data (status, dates and stuff)
 
 class Document(ndb.Model):
-    pass
-#    nodes = []
-#    variables = 
+    node = ndb.KeyProperty(repeated=True)
+    variables = ndb.JsonProperty()
 
 class Amendment(Document):
-    pass
-#    old_obj = ndb.Key()
-#    new_obj = ndb.Key()
+    old_obj = ndb.KeyProperty()
+    new_obj = ndb.KeyProperty()
 
 class Node(ndb.Model):
     socket = ndb.KeyProperty(repeated=True)
@@ -53,10 +51,16 @@ class RandomDataGenerator(object):
         return 0
 
 class SampleObjectFactory(object):
+    """Define a language for this abstraction layer.
+    Keys = 
+    Instance = 
+    Variable = 
+
+    """
     def __init__(self):
         self.dataGenerator = RandomDataGenerator()
     
-    def objectsWithSingleModifications(self, original_object):
+    def objectVariationsOf(self, original_object):
         """For each property in original_object,
         return a new object with that property modified.
         
@@ -66,21 +70,21 @@ class SampleObjectFactory(object):
                 for var in original_object._values]
 
     def randomSocket(self):
-        return br.Socket(text=self._randomText(),
-                         variables=self.testDataGenerator.randomDictionary,
+        return Socket(text=self.dataGenerator.randomText(3),
+                         variables=self.dataGenerator.randomDictionary(3),
                          linked_node=None)
 
     def randomSocketFromKeys(self, keys):
-        return br.Socket(text=self.randomText(),
-                         variables=self.testDataGenerator.randomDictionaryFromKeys(keys),
+        return Socket(text=self.dataGenerator.randomText(3),
+                         variables=self.dataGenerator.randomDictionaryFromKeys(keys),
                          linked_node=None)
 
     def randomNode(self):
-        return br.Node(socket=[self.randomSocket() for x in xrange(0, self.SAMPLE_SIZE)])
+        return Node(socket=[self.randomSocket().put() for x in xrange(0, 3)])
 
     def randomDocument(self):
         pass
-    #   return br.Document(node=[self.randomNode() for x in xrange(0,3)])
+    #   return Document(node=[self.randomNode() for x in xrange(0,3)])
 
     def randomAmendment(self):
         pass
@@ -88,8 +92,14 @@ class SampleObjectFactory(object):
     def randomAgreement(self):
         pass
 
-class MainPage(webapp2.RequestHandler):
+    def randomInstanceOfEach(self):
+        return [self.randomSocket()]
+        #        self.randomNode(),
+        #        self.randomDocument(),
+        #        self.randomAmendment(),
+        #        self.randomAgreement()]
 
+class MainPage(webapp2.RequestHandler):
     MAIN_PAGE_HTML = """\
     <!DOCTYPE html>
     <html>

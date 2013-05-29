@@ -54,7 +54,7 @@ class SampleObjectFactoryTestCase(unittest.TestCase):
         self.testAgreementFactory()
 
     def testSocketFactory(self):
-        sample_with_variations = self.objectFactory.objectsWithSingleModifications(self.test_socket).append(self.test_socket)
+        sample_with_variations = self.objectFactory.objectVariationsOf(self.test_socket).append(self.test_socket)
         print('\nsample with variations: \n %s' % (sample_with_variations))
         self.assertEquals(sample_with_variations, list(set(sample_with_variations)))
 
@@ -85,11 +85,6 @@ class LoadMainPageTestCase(unittest.TestCase):
 
 class DisplayObjectOnWebTestCase(unittest.TestCase):
     """Tests /view/(.*)
-    1) setUp testbed and testapp
-    2) generate___ForWeb() create sample object and place in ndb
-    3) call web and make assertions on response
-    Store an object in NDB.
-    Access and display object using key from url.
 
     """
     def setUp(self):
@@ -98,55 +93,25 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
         self.testapp = webtest.TestApp(br.application)
+        self.objectFactory = br.SampleObjectFactory()
+        self.test_data_keys = self.putTestDataInNDB()
+
+    def putTestDataInNDB(self):
+        return [x.put() for x in self.objectFactory.randomInstanceOfEach()]
 
     def runTest(self):
-        self.displaySampleClassOnWeb()
-        self.displayDataModelOnWeb()
+        for key in self.test_data_keys:
+            response = self.testapp.get('/view/' + key.urlsafe())
+            self.assertTrue(self.isValidHTTPResponse(response))
+            self.assertTrue(self.HTTPResponseContains(response, str(key.get())))
 
-    def displaySampleClassOnWeb(self):
-        class Employee(ndb.Model):
-            text = ndb.StringProperty()
-        self.test_employee = Employee(text='I am a banana!')
-        self.key = self.test_employee.put()
+    def isValidHTTPResponse(self, response):
+        """Verify that input response status is OK and content type is html."""
+        return response.status_int == 200 and response.content_type == 'text/html'
 
-        test_object_url = '/view/' + self.key.urlsafe()
-        response = self.testapp.get(test_object_url)
-        self.assertEqual(self.key, ndb.Key(urlsafe=self.key.urlsafe()))  # parse response
-        self.assertEqual(response.status_int, 200)
-        self.assertIn(self.test_employee.text, response.normal_body)
-        self.assertEqual(response.content_type, 'text/html')
-
-    def displayDataModelOnWeb(self):
-        self.displaySocketOnWeb()
-        self.displayNodeOnWeb()
-        self.displayDocumentOnWeb()
-        self.displayAmendmentOnWeb()
-        self.displayAgreementOnWeb()
-    
-    def displaySocketOnWeb(self):
-        self.test_socket = br.Socket(text='I am a ${fruit}!', variables={'fruit': 'banana'})
-        self.test_socket_key = self.test_socket.put()
-        response = self.testapp.get('/view/' + self.test_socket_key.urlsafe())
-        self.assertEqual(response.status_int, 200)
-        self.assertIn(self.test_socket.text, response.normal_body)
-        self.assertIn(str(self.test_socket.variables), response.normal_body)
-        self.assertEqual(response.content_type, 'text/html')
-
-    @unittest.skip("Stub")
-    def displayNodeOnWeb(self):
-        pass
-
-    @unittest.skip("Stub")
-    def displayDocumentOnWeb(self):
-        pass
-
-    @unittest.skip("Stub")
-    def displayAmendmentOnWeb(self):
-        pass
-
-    @unittest.skip("Stub")
-    def displayAgreementOnWeb(self):
-        pass
+    def HTTPResponseContains(self, response, target_object):
+        """Verify that inputted response contains inputted object."""
+        return str(target_object) in response.normal_body
 
     def tearDown(self):
         self.testbed.deactivate()
