@@ -1,16 +1,14 @@
 import sys
+import unittest
+
+import webtest
+from google.appengine.ext import ndb, testbed, db
+
+import application as app
+import model
+
 sys.path.insert(0, '.')  # add parent folder to path list
 
-import logging
-import unittest
-import application as br
-import webtest
-import webapp2
-
-from google.appengine.api import memcache
-from google.appengine.ext import ndb
-from google.appengine.ext import testbed
-from google.appengine.ext import db  # included for db.BadValueError exception
 
 
 class RandomDataGeneratorTestCase(unittest.TestCase):
@@ -20,7 +18,7 @@ class RandomDataGeneratorTestCase(unittest.TestCase):
     
     """
     def setUp(self):
-        self.dataGenerator = br.RandomDataGenerator()
+        self.dataGenerator = model.RandomDataGenerator()
         self.SAMPLE_SIZE = 3
     
     def runTest(self):
@@ -41,9 +39,9 @@ class SampleObjectFactoryTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.objectFactory = br.SampleObjectFactory()
-        self.dataGenerator = br.RandomDataGenerator()
-        self.test_socket = br.Socket(text=self.dataGenerator.randomText(3),
+        self.objectFactory = model.SampleObjectFactory()
+        self.dataGenerator = model.RandomDataGenerator()
+        self.test_socket = model.Socket(text=self.dataGenerator.randomText(3),
                                      variables=self.dataGenerator.randomDictionary(3))
 
     def runTest(self):
@@ -76,7 +74,7 @@ class SampleObjectFactoryTestCase(unittest.TestCase):
 
 class LoadMainPageTestCase(unittest.TestCase):
     def setUp(self):
-        self.testapp = webtest.TestApp(br.application)
+        self.testapp = webtest.TestApp(app.application)
 
     def runTest(self):
         response = self.testapp.get('/')
@@ -92,8 +90,8 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
         self.testbed.activate()
         self.testbed.init_datastore_v3_stub()
         self.testbed.init_memcache_stub()
-        self.testapp = webtest.TestApp(br.application)
-        self.objectFactory = br.SampleObjectFactory()
+        self.testapp = webtest.TestApp(app.application)
+        self.objectFactory = model.SampleObjectFactory()
         self.test_data_keys = self.putTestDataInNDB()
 
     def putTestDataInNDB(self):
@@ -157,7 +155,7 @@ class ReadAndWriteFromNDBTestCase(unittest.TestCase):
         self.testWithAgreement()
 
     def testWithSocket(self):
-        test_socket = br.Socket(text='I am a ${fruit}!', variables={'fruit': 'banana'})
+        test_socket = model.Socket(text='I am a ${fruit}!', variables={'fruit': 'banana'})
         test_socket_key = test_socket.put()
         self.assertEquals(test_socket_key.get(), test_socket)
         test_socket.variables = {'fruit': 'apple'}
@@ -203,25 +201,25 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         test_text = 'I am a ${fruit}.'
         test_variables = {'fruit': 'banana'}
         # 2
-        test_socket = br.Socket(text=test_text, variables=test_variables)
+        test_socket = model.Socket(text=test_text, variables=test_variables)
         # 3
         self.assertEquals(test_socket.text, test_text)
         self.assertEquals(test_socket.variables, test_variables)
         self.assertEquals(test_socket.linked_node, None)
         #4
-        self.assertEquals(test_socket, br.Socket(text=test_text,
+        self.assertEquals(test_socket, model.Socket(text=test_text,
                                                  variables=test_variables))
-        self.assertNotEquals(test_socket, br.Socket(text='',
+        self.assertNotEquals(test_socket, model.Socket(text='',
                                                     variables=test_variables))
-        self.assertNotEquals(test_socket, br.Socket(text=test_text,
+        self.assertNotEquals(test_socket, model.Socket(text=test_text,
                                                     variables=None))
-        self.assertNotEquals(test_socket, br.Socket(text=test_text,
+        self.assertNotEquals(test_socket, model.Socket(text=test_text,
                                                     variables=test_variables,
-                                                    linked_node=br.Node()))
+                                                    linked_node=model.Node()))
         # 5
-        self.assertRaises(db.BadValueError, lambda: br.Socket(text=0))
-        self.assertRaises(db.BadValueError, lambda: br.Socket(variables=0))
-        self.assertRaises(db.BadValueError, lambda: br.Socket(linked_node=0))
+        self.assertRaises(db.BadValueError, lambda: model.Socket(text=0))
+        self.assertRaises(db.BadValueError, lambda: model.Socket(variables=0))
+        self.assertRaises(db.BadValueError, lambda: model.Socket(linked_node=0))
 
     @unittest.skip("Stub")
     def testNode(self):
