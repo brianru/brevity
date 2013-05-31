@@ -103,7 +103,7 @@ class ViewPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
         self.response.headers['Content-Type'] = 'text/html'
         if url_safe_key is not '':
-            self.response.write(self.VIEW_PAGE_HTML % (model.objectFromURLKey(url_safe_key)))
+            self.response.write(self.VIEW_PAGE_HTML % (model.objectFromURLSafeKey(url_safe_key)))
         else:
             self.response.write(self.VIEW_PAGE_HTML % ('Explore Brevity!'))
 
