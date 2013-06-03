@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
-
+import inspect
 import sys
 import unittest
-import inspect
-import application as app
-import model
+
 from google.appengine.ext import ndb, db, testbed
+
+import model
+
+
 sys.path.insert(0, '.')  # add parent folder to path list
 
 
@@ -151,13 +153,26 @@ class CRUDInNDBTestCase(unittest.TestCase):
         self.objectFactory = model.SampleObjectFactory()
 
     def runTest(self):
-        #TODO Separate tasks with helper methods.
+        testData = self.objectFactory.randomInstanceOfEach()
+        testDataKeys = [testItem.put() for testItem in testData]
         # Create // assert keys are returned
+        self.assertEquals(len(testData), len(testDataKeys))
+        for testItem in testDataKeys:
+            self.assertIsInstance(testItem, ndb.Key)
         # Read // assert keys.get() equals test data items
+        self.assertEquals(testData,
+                          [testItem.get() for testItem in testDataKeys])
         # Update // update one property and .put(), assert keys match
+        for testItem in testData:
+            self.objectFactory.randomlyModify(testItem)
+            self.assertIsInstance(testItem.put(), ndb.Key)
         # Delete // delete and assert keys.get() fails
-        for test_item in self.objectFactory.randomInstanceOfEach():
-            self.assertEquals(test_item.put().get(), test_item)
+        for testItem in testDataKeys:
+            testItem.delete()
+            self.assertIsNone(testItem.get())
+
+
 
     def tearDown(self):
         self.testbed.deactivate()
+

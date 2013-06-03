@@ -1,12 +1,12 @@
 import sys
 import unittest
-import inspect
 
 import webtest
-from google.appengine.ext import ndb, testbed, db
+from google.appengine.ext import testbed
 
 import application as app
 import model
+
 
 sys.path.insert(0, '.')  # add parent folder to path list
 

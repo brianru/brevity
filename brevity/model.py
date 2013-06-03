@@ -86,7 +86,13 @@ class SampleObjectFactory(object):
         self.dataGenerator = RandomDataGenerator()
         self.SAMPLE_SIZE = 3
     
-    #FIXME I do not understand this code.
+    def randomlyModify(self, original_object):
+        target_attribute = original_object._values[original_object._values.keys()[0]]
+        if isinstance(target_attribute, (str, dict, type(None))):
+            return self.dataGenerator.randomlyModify(target_attribute)
+        else:
+            self.randomlyModify(target_attribute)
+    
     def objectVariationsOf(self, original_object):
         """For each property in original_object,
         return a new object with that property modified.
