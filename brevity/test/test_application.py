@@ -176,18 +176,17 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         self.assertRaises(db.BadValueError, lambda: model.Socket(linked_node=0))
 
     def testNode(self):
-        nodeVariables= []
+        nodeVariableKeys = []
         testNode = self.objectFactory.randomNode()
-        for socket in testNode._values['sockets']:
-            nodeVariables.extend(socket.get().variables)
-        self.assertEquals(nodeVariables, list(set(nodeVariables)))
-        # should disallow duplicate variable keys
+        for socket in testNode.sockets:
+            nodeVariableKeys.extend(socket.get().variables.keys())
+        self.assertEquals(nodeVariableKeys.sort(), list(set(nodeVariableKeys)).sort())
 
         nodeSockets = [x for x in testNode.sockets]
-        self.assertEquals(nodeSockets, list(set(nodeSockets)))
+        self.assertEquals(nodeSockets.sort(), list(set(nodeSockets)).sort())
         # should disallow duplicate sockets (requires deep search)
 
-        self.assertRaises(bd.BadValueError, lambda: model.Node(socket=0))
+        self.assertRaises(db.BadValueError, lambda: model.Node(sockets=0))
         # ensure nodes can only contain sockets (and not other nodes)
 
     def testDocument(self):

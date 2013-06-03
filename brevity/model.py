@@ -58,7 +58,7 @@ class RandomDataGenerator(object):
         return [random.randint(0,sys.maxint) for x in xrange(0,numberOfKeys)]
     
     def randomDictionaryFromKeys(self, keys):
-        return dict(zip(keys, random.choice(self.noun_list))) 
+        return dict(zip(keys, [random.choice(self.noun_list) for i in keys])) 
 
     def randomlyModify(self, original_object):
         if original_object is None:
@@ -81,18 +81,19 @@ class SampleObjectFactory(object):
         self.dataGenerator = RandomDataGenerator()
         self.SAMPLE_SIZE = 3
     
+    #FIXME I do not understand this code.
     def objectVariationsOf(self, original_object):
         """For each property in original_object,
         return a new object with that property modified.
         
         """
         print('original_object._values: %s' % (original_object._values))
-        print('dir(original_object._values[0]): %s' % (dir(original_object._values['linked_node'])))
+#        print('dir(original_object._values[0]): %s' % (dir(original_object._values['linked_node'])))
         # i should not be looking at var but at var's value.
         # original_object._values is a dictionary of keys and values -- keys are the properties
         # i want to look at the type of the property's value
         return [copy.copy(original_object).\
-                __setattr__(var, self.dataGenerator.randomlyModify(var))\
+                __setattr__(original_object._values[var], self.dataGenerator.randomlyModify(original_object._values[var]))\
                 if isinstance(var, (str, dict))\
                 else (self.objectVariationsOf(var))\
                 for var in original_object._values]
