@@ -4,7 +4,7 @@ import sys
 import unittest
 
 USAGE = """%prog SDK_PATH TEST_PATH
-Run unit tests for APp Engine apps.
+Run unit tests for App Engine apps.
 
 SDK_PATH    Path to the SDK installation
 TEST_PATH   Path to the package containing test modules"""

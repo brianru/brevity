@@ -7,31 +7,36 @@ import sys
 from google.appengine.ext import ndb, db
 
 
-def validateDictionary(proposedObject, objectValue):
+def isDictionary(proposedObject, objectValue):
     if isinstance(objectValue, dict):
+        return None
+    else:
+        raise db.BadValueError
+
+def isSocket(proposedObject, objectValue):
+    if objectValue.kind() == 'Socket':
         return None
     else:
         raise db.BadValueError
 
 class Agreement(ndb.Model):
     documents = ndb.KeyProperty(repeated=True)
-    meta_data = ndb.JsonProperty()
-    # other meta data (status, dates and stuff)
+    meta_data = ndb.JsonProperty(validator=isDictionary)
 
 class Document(ndb.Model):
     nodes = ndb.KeyProperty(repeated=True)
-    variables = ndb.JsonProperty()
+    variables = ndb.JsonProperty(validator=isDictionary)
 
 class Amendment(Document):
     old_obj = ndb.KeyProperty()
     new_obj = ndb.KeyProperty()
 
 class Node(ndb.Model):
-    sockets = ndb.KeyProperty(repeated=True)
+    sockets = ndb.KeyProperty(repeated=True, validator=isSocket)
 
 class Socket(ndb.Model):
     text = ndb.StringProperty()
-    variables = ndb.JsonProperty(validator=validateDictionary)
+    variables = ndb.JsonProperty(validator=isDictionary)
     linked_node = ndb.StructuredProperty(Node)
 
 def objectFromKey(key):
@@ -87,17 +92,16 @@ class SampleObjectFactory(object):
         return a new object with that property modified.
         
         """
-        print('original_object._values: %s' % (original_object._values))
-#        print('dir(original_object._values[0]): %s' % (dir(original_object._values['linked_node'])))
-        # i should not be looking at var but at var's value.
-        # original_object._values is a dictionary of keys and values -- keys are the properties
-        # i want to look at the type of the property's value
-        return [copy.copy(original_object).\
-                __setattr__(original_object._values[var], self.dataGenerator.randomlyModify(original_object._values[var]))\
-                if isinstance(var, (str, dict))\
-                else (self.objectVariationsOf(var))\
-                for var in original_object._values]
-
+        objectVariations = []
+        for var in original_object._values:
+            if isinstance(var, (str, dict, None)):
+                objectCopy = copy.copy(original_object)
+                objectCopy._values.__setitem__(str(var), self.dataGenerator.randomlyModify(var))
+                objectVariations.append(objectCopy)
+            else:
+                self.objectVariationsOf(var)
+        return objectVariations
+    
     def randomSocket(self):
         return Socket(text=str(self.dataGenerator.randomLinesOfText(self.SAMPLE_SIZE)),
                          variables=self.dataGenerator.randomDictionary(self.SAMPLE_SIZE),
