@@ -107,8 +107,16 @@ class ViewPage(webapp2.RequestHandler):
         else:
             self.response.write(self.VIEW_PAGE_HTML % ('Explore Brevity!'))
 
+
+class EditPage(webapp2.RequestHandler):
+    EDIT_PAGE_HTML = """\
+    """
+    
+    def get(self, url_safe_key):
+        pass
+
 application = webapp2.WSGIApplication([(r'/', MainPage),
-                                       (r'/view/(.*)', ViewPage)], debug=True)
-                                    #  (r'/edit/(.*)', EditPage),
+                                       (r'/view/(.*)', ViewPage),
+                                       (r'/edit/(.*)', EditPage)], debug=True)
                                     #  (r'/create/', CreatePage),
 

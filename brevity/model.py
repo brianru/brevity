@@ -7,24 +7,12 @@ import sys
 from google.appengine.ext import ndb, db
 
 
-def isDictionary(proposedObject, objectValue):
-    if isinstance(objectValue, dict):
-        return None
-    else:
-        raise db.BadValueError
-
-def isSocket(proposedObject, objectValue):
-    if objectValue.kind() == 'Socket':
-        return None
-    else:
-        raise db.BadValueError
-
 class Agreement(ndb.Model):
-    documents = ndb.KeyProperty(repeated=True)
+    documents = ndb.KeyProperty(repeated=True, validator=isDocument)
     meta_data = ndb.JsonProperty(validator=isDictionary)
 
 class Document(ndb.Model):
-    nodes = ndb.KeyProperty(repeated=True)
+    nodes = ndb.KeyProperty(repeated=True, validator=isNode)
     variables = ndb.JsonProperty(validator=isDictionary)
 
 class Amendment(Document):
@@ -39,10 +27,36 @@ class Socket(ndb.Model):
     variables = ndb.JsonProperty(validator=isDictionary)
     linked_node = ndb.StructuredProperty(Node)
 
+def isDictionary(proposedObject, objectValue):
+    """Check if objectValue is of type dict."""
+    if isinstance(objectValue, dict):
+        return None
+    else:
+        raise db.BadValueError
+
+def isSocket(proposedObject, objectValue):
+    """Check if objectValue is a key for type Socket."""
+    return self.isComponentType(proposedObject, objectValue, 'Socket')
+
+def isNode(proposedObject, objectValue):
+    """Check if objectValue is a key for type Node."""
+    return self.isComponentType(proposedObject, objectValue, 'Node')
+
+def isDocument(proposedObject, objectValue):
+    return self.isComponentType(proposedObject, objectValue, 'Document')
+
+def isComponentType(proposedObject, objectValue, componentType):
+    if objectValue.kind() == componentType:
+        return None
+    else:
+        raise db.BadValueError
+
 def objectFromKey(key):
+    """Get object instance from NDB using key."""
     return key.get()
 
 def objectFromURLSafeKey(urlKey):
+    """Get object instance from NDB using url safe key."""
     return objectFromKey(ndb.Key(urlsafe=urlKey))
 
 class RandomDataGenerator(object):
@@ -100,6 +114,7 @@ class SampleObjectFactory(object):
         """
         objectVariations = []
         for var in original_object._values:
+#            objectVariations.append(self.randomlyModify(var))
             if isinstance(var, (str, dict, None)):
                 objectCopy = copy.copy(original_object)
                 objectCopy._values.__setitem__(str(var), self.dataGenerator.randomlyModify(var))
@@ -122,8 +137,8 @@ class SampleObjectFactory(object):
         return Node(sockets=[self.randomSocket().put() for x in xrange(0, self.SAMPLE_SIZE)])
 
     def randomDocument(self):
-        pass
-    #   return Document(node=[self.randomNode() for x in xrange(0,self.SAMPLE_SIZE)])
+        return Document(nodes=[self.randomNode().put() for x in xrange(0, self.SAMPLE_SIZE)],
+                        variables=self.dataGenerator.randomDictionary(self.SAMPLE_SIZE))
 
     def randomAmendment(self):
         pass
@@ -133,8 +148,8 @@ class SampleObjectFactory(object):
 
     def randomInstanceOfEach(self):
         return [self.randomSocket(),
-                self.randomNode()]
-        #        self.randomDocument(),
+                self.randomNode(),
+                self.randomDocument()]
         #        self.randomAmendment(),
         #        self.randomAgreement()]
 

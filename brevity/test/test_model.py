@@ -12,7 +12,6 @@ import model
 sys.path.insert(0, '.')  # add parent folder to path list
 
 
-# TODO: move to test/test_model.py
 class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
     """Verify data model ensures data is well-formed (i.e. consistent and complete).
     1) Assign sample object contents to local variables.
@@ -71,20 +70,24 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         self.assertRaises(db.BadValueError, lambda: model.Node(sockets=0))
         self.assertRaises(db.BadValueError,
                           lambda: model.Node(sockets=[self.objectFactory.randomNode().put()]))
-            
+    
+    @unittest.skip('stub')
     def testDocument(self):
+        self.assertEquals(0, 1)
             # ensure nodes do not overlap (have identical variables)
         # disallow duplicate nodes
         # ensure document only contains nodes in nodes attribute
-        pass
 
-    @unittest.skip("Stub")
+    @unittest.skip('stub')
     def testAmendment(self):
         pass
     
-    @unittest.skip("Stub")
+    @unittest.skip('stub')
     def testAgreement(self):
         pass
+
+    def tearDown(self):
+        self.testbed.deactivate()
 
 
 class RandomDataGeneratorTestCase(unittest.TestCase):
@@ -135,6 +138,9 @@ class SampleObjectFactoryTestCase(unittest.TestCase):
                                           in self.objectFactory.randomInstanceOfEach()]
         self.assertEquals(sorted(listOfModelClasses), sorted(listOfClassesFromObjectFactory))
 
+    def tearDown(self):
+        self.testbed.deactivate()
+
 
 class CRUDInNDBTestCase(unittest.TestCase):
     """Create test data.
@@ -171,8 +177,9 @@ class CRUDInNDBTestCase(unittest.TestCase):
             testItem.delete()
             self.assertIsNone(testItem.get())
 
-
-
     def tearDown(self):
         self.testbed.deactivate()
 
+
+if __name__ == "__main__":
+    unittest.main()
