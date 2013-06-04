@@ -57,9 +57,30 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
         self.testbed.deactivate()
 
 
-@unittest.skip("Stub")
 class ModifyDataFromWebTestCase(unittest.TestCase):
-    pass
+    """Populate modify and submit HTML form, succesfully communicating with NDB at each end."""
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+        self.testapp = webtest.TestApp(app.application)
+        self.objectFactory = model.SampleObjectFactory()
+        self.dataGenerator = model.RandomDataGenerator()
+    
+    def runTest(self):
+        for key in self.test_data_keys:
+            getResponse = self.testapp.get('/edit/' + key.urlsafe())
+            self.assertTrue(self.isValidHTTPResponse(response))
+            self.assertTrue(self.HTTPResponseContains(response, str(key.get())))
+            form = response.form
+            self.assertEquals(form.action(), '/edit/' + key.urlsafe()) 
+            form['textarea'].value = model.randomlyModify(key.get())
+            postResponse = form.submit()
+            self.assertTrue(self.isValidHTTPResponse(postResponse))
+            self.assertTrue(self.HTTPResponseContains(postResponse, str(key.get())))
+            self.assertNotEquals(getResponse.normal_body, postResponse.normal_body)
+            self.assertTrue(self.HTTPResponseContains(postRespose, str(key.get())))
 
 @unittest.skip("Stub")
 class CreateDataFromWebTestCase(unittest.TestCase):

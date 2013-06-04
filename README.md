@@ -26,6 +26,8 @@ What we are making:
 - [x] unit testing
 - [x] refactor data structure and data manipulation classes to provide enough flexibility for future versions
 - [ ] amendment duality (simultaneously a standalone contract as well as an amending package)
+- [x] host on Google App Engine
+- [x] use NDB for persistence
 
 What we are learning:
 
@@ -33,7 +35,6 @@ What we are learning:
 - visitor pattern
 - builder pattern
 - unit testing
-- sublime text 2
 - parsing xml
 - debugging with pdb
 - file manipulation
@@ -42,10 +43,10 @@ What we are learning:
 - bootstrap
 
 
+
 0.3 Make it last
 ----------------
-- [ ] host on Google App Engine
-- [ ] use NDB for persistence
+
 - [ ] component versioning
 - [ ] agreement slicing
 - [ ] prototype web interface using Bootstrap
