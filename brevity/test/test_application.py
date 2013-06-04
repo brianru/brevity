@@ -36,13 +36,14 @@ class DisplayObjectOnWebTestCase(unittest.TestCase):
         self.test_data_keys = self.putTestDataInNDB()
 
     def putTestDataInNDB(self):
-        return [x.put() for x in self.objectFactory.randomInstanceOfEach()]
+        return [item.put() for item in self.objectFactory.randomInstanceOfEach()]
 
     def runTest(self):
         for key in self.test_data_keys:
             response = self.testapp.get('/view/' + key.urlsafe())
             self.assertTrue(self.isValidHTTPResponse(response))
-            self.assertTrue(self.HTTPResponseContains(response, str(key.get())))
+            self.assertTrue(self.HTTPResponseContains(response,
+                                                      str(key.get())))
 
     def isValidHTTPResponse(self, response):
         """Verify that input response status is OK and content type is html."""

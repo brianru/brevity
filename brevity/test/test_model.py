@@ -12,6 +12,14 @@ import model
 sys.path.insert(0, '.')  # add parent folder to path list
 
 
+def activateDatastoreTestbed():
+    activeTestbed = testbed.Testbed()
+    activeTestbed.activate()
+    activeTestbed.init_datastore_v3_stub()
+    activeTestbed.init_memcache_stub()
+    return activeTestbed
+
+
 class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
     """Verify data model ensures data is well-formed (i.e. consistent and complete).
     1) Assign sample object contents to local variables.
@@ -21,10 +29,7 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
     5) Test content type restrictions raise expected exceptions.
     """
     def setUp(self):
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
+        self.testbed = activateDatastoreTestbed()
         self.objectFactory = model.SampleObjectFactory()
 
     def runTest(self):
@@ -71,12 +76,19 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         self.assertRaises(db.BadValueError,
                           lambda: model.Node(sockets=[self.objectFactory.randomNode().put()]))
     
-    @unittest.skip('stub')
     def testDocument(self):
-        self.assertEquals(0, 1)
-            # ensure nodes do not overlap (have identical variables)
-        # disallow duplicate nodes
-        # ensure document only contains nodes in nodes attribute
+        documentVariableKeys = []
+        sampleDocument = self.objectFactory.randomDocument()
+        for node in sampleDocument.nodes:
+            for socket in node.get().sockets:
+                documentVariableKeys.extend(socket.get().variables.keys())
+        self.assertEquals(sorted(documentVariableKeys),
+                          sorted(list(set(documentVariableKeys))))
+        documentNodes = sorted([x for x in sampleDocument.nodes])
+        self.assertEquals(documentNodes, sorted(list(set(documentNodes))))
+        self.assertRaises(db.BadValueError, lambda: model.Document(nodes=0))
+        self.assertRaises(db.BadValueError, lambda: model.Document(nodes=self.objectFactory.randomSocket().put()))
+        self.assertRaises(db.BadValueError, lambda: model.Document(variables=0))
 
     @unittest.skip('stub')
     def testAmendment(self):
@@ -114,10 +126,7 @@ class SampleObjectFactoryTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
+        self.testbed = activateDatastoreTestbed()
         self.objectFactory = model.SampleObjectFactory()
         self.dataGenerator = model.RandomDataGenerator()
         self.testDataSet = self.objectFactory.randomInstanceOfEach()
@@ -152,10 +161,7 @@ class CRUDInNDBTestCase(unittest.TestCase):
 
     """
     def setUp(self):
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
+        self.testbed = activateDatastoreTestbed()
         self.objectFactory = model.SampleObjectFactory()
 
     def runTest(self):

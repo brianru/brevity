@@ -61,6 +61,7 @@ class Socket(ndb.Model):
     variables = ndb.JsonProperty(validator=isDictionary)
     linked_node = ndb.StructuredProperty(Node)
 
+
 # Test data generator
 class RandomDataGenerator(object):
     def __init__(self):
