@@ -103,6 +103,7 @@ class SampleObjectFactory(object):
     def __init__(self):
         self.dataGenerator = RandomDataGenerator()
         self.SAMPLE_SIZE = 3
+        # add randomlyModify methods to model.(Socket, Node, Document, Amendment, Agreement)
     
     def randomlyModify(self, original_object):
         target_attribute = original_object._values[original_object._values.keys()[0]]
@@ -113,7 +114,8 @@ class SampleObjectFactory(object):
     
     def objectVariationsOf(self, original_object):
         """For each property in original_object,
-        return a new object with that property modified.
+        create a copy of original_object,
+        randomlyModify attribute in copy
         
         """
         objectVariations = []

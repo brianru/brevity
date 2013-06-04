@@ -106,6 +106,7 @@ class ViewPage(webapp2.RequestHandler):
                     (model.objectFromURLSafeKey(url_safe_key)))
         else:
             self.response.write(self.VIEW_PAGE_HTML % ('Explore Brevity!'))
+            # display randomInstanceOfEach()
 
 
 class EditPage(webapp2.RequestHandler):
@@ -138,11 +139,21 @@ class EditPage(webapp2.RequestHandler):
             self.redirect('/create/')
 
     def post(self, url_safe_key):
-        pass
+        # reconstitute json from form text area
+        self.request.get('content')
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.write(self.EDIT_PAGE_HTML)
         # translate contents of form into object
+
+class CreatePage(webapp2.RequestHandler):
+    CREATE_PAGE_HTML = """\
+    """
+
+    def get(self):
+        pass
 
 application = webapp2.WSGIApplication([(r'/', MainPage),
                                        (r'/view/(.*)', ViewPage),
-                                       (r'/edit/(.*)', EditPage)], debug=True)
-                                    #  (r'/create/', CreatePage),
+                                       (r'/edit/(.*)', EditPage),
+                                       (r'/create/', CreatePage)], debug=True)
 
