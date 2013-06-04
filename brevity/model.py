@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: iso-8859-15 -*-
 """Brevity data model."""
 import copy
 import random
@@ -6,7 +7,40 @@ import sys
 
 from google.appengine.ext import ndb, db
 
+# Validators
+def isDictionary(proposedObject, objectValue):
+    """Check if objectValue is of type dict."""
+    if isinstance(objectValue, dict):
+        return None
+    else:
+        raise db.BadValueError
 
+def isSocket(proposedObject, objectValue):
+    """Check if objectValue is a key for type Socket."""
+    return isComponentType(proposedObject, objectValue, 'Socket')
+
+def isNode(proposedObject, objectValue):
+    """Check if objectValue is a key for type Node."""
+    return isComponentType(proposedObject, objectValue, 'Node')
+
+def isDocument(proposedObject, objectValue):
+    return isComponentType(proposedObject, objectValue, 'Document')
+
+def isComponentType(proposedObject, objectValue, componentType):
+    if objectValue.kind() == componentType:
+        return None
+    else:
+        raise db.BadValueError
+
+def objectFromKey(key):
+    """Get object instance from NDB using key."""
+    return key.get()
+
+def objectFromURLSafeKey(urlKey):
+    """Get object instance from NDB using url safe key."""
+    return objectFromKey(ndb.Key(urlsafe=urlKey))
+
+# Data model
 class Agreement(ndb.Model):
     documents = ndb.KeyProperty(repeated=True, validator=isDocument)
     meta_data = ndb.JsonProperty(validator=isDictionary)
@@ -27,38 +61,7 @@ class Socket(ndb.Model):
     variables = ndb.JsonProperty(validator=isDictionary)
     linked_node = ndb.StructuredProperty(Node)
 
-def isDictionary(proposedObject, objectValue):
-    """Check if objectValue is of type dict."""
-    if isinstance(objectValue, dict):
-        return None
-    else:
-        raise db.BadValueError
-
-def isSocket(proposedObject, objectValue):
-    """Check if objectValue is a key for type Socket."""
-    return self.isComponentType(proposedObject, objectValue, 'Socket')
-
-def isNode(proposedObject, objectValue):
-    """Check if objectValue is a key for type Node."""
-    return self.isComponentType(proposedObject, objectValue, 'Node')
-
-def isDocument(proposedObject, objectValue):
-    return self.isComponentType(proposedObject, objectValue, 'Document')
-
-def isComponentType(proposedObject, objectValue, componentType):
-    if objectValue.kind() == componentType:
-        return None
-    else:
-        raise db.BadValueError
-
-def objectFromKey(key):
-    """Get object instance from NDB using key."""
-    return key.get()
-
-def objectFromURLSafeKey(urlKey):
-    """Get object instance from NDB using url safe key."""
-    return objectFromKey(ndb.Key(urlsafe=urlKey))
-
+# Test data generator
 class RandomDataGenerator(object):
     def __init__(self):
         with open('test/mobydick.txt', 'r') as f:
@@ -114,7 +117,6 @@ class SampleObjectFactory(object):
         """
         objectVariations = []
         for var in original_object._values:
-#            objectVariations.append(self.randomlyModify(var))
             if isinstance(var, (str, dict, None)):
                 objectCopy = copy.copy(original_object)
                 objectCopy._values.__setitem__(str(var), self.dataGenerator.randomlyModify(var))

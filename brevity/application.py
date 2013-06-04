@@ -54,7 +54,6 @@ Tablet
 ;: iOS
 :: Android
 
-
 """
 
 import webapp2
