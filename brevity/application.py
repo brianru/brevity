@@ -19,19 +19,25 @@ Agreement
 RandomDataGenerator
 SampleObjectFactory
 
+Define and provide interface to data model. Ensure consistency.
+
 ------------------
 ------ VIEW ------
 ------------------
-MainPage
-ViewPage
+TEMPLATES
+HTML generators
 
+Construct view per controller's instructions. Display data using appropriate resources.
 
 ------------------
 --- CONTROLLER ---
 ------------------
-ServerController
-ClientController
+MainPage
+ViewPage
+EditPage
+CreatePage
 
+CRUD data with Model. Tell view(s) what to display.
 
 #################
 
@@ -127,7 +133,9 @@ class EditPage(webapp2.RequestHandler):
       </head>
       <body>
         <form action="/edit/%s" method="post">
-          <div><textarea name="content" rows="9" cols="80">%s</textarea></div>
+          <div>Text:<br><textarea name="content" rows="9" cols="80">%s</textarea></div>
+          <div>Variables:<br><textarea name="variables" rows="9" cols="80">%s</textarea></div>
+          <div>Linked node id:<br><textarea name="linked_node" rows="1" cols="80">%s</textarea></div>
           <div><input type="submit" value="Submit"></div>
         </form>
         <script src="http://code.jquery.com/jquery.js"></script>
@@ -139,19 +147,23 @@ class EditPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
         self.response.headers['Content-Type'] = 'text/html'
         if url_safe_key is not '':
+            data_object = model.objectFromURLSafeKey(url_safe_key)
             self.response.write(self.EDIT_PAGE_HTML %\
-                    (url_safe_key, model.objectFromURLSafeKey(url_safe_key)))
+                    (url_safe_key, data_object.text, data_object.variables, data_object.linked_node ))
         else:
             self.objectFactory = model.SampleObjectFactory()
             url_safe_key = model.urlSafeKeyFromObject(self.objectFactory.randomSocket())
             self.redirect('/edit/' + str(url_safe_key))
 
     def post(self, url_safe_key):
-        self.request.get('content')
+        data_object = model.objectFromURLSafeKey(url_safe_key)
+        data_object.text = self.request.get('content')
+        data_object.put()
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.write(self.EDIT_PAGE_HTML)
+        self.response.write(self.EDIT_PAGE_HTML %\
+                (url_safe_key, data_object.text, data_object.variables, data_object.linked_node))
         # translate contents of form into object
-
+    
 
 class CreatePage(webapp2.RequestHandler):
     CREATE_PAGE_HTML = """\
@@ -159,6 +171,7 @@ class CreatePage(webapp2.RequestHandler):
 
     def get(self):
         pass
+
 
 application = webapp2.WSGIApplication([(r'/', MainPage),
                                        (r'/view/(.*)', ViewPage),

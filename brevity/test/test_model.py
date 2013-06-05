@@ -131,6 +131,7 @@ class SampleObjectFactoryTestCase(unittest.TestCase):
         self.dataGenerator = model.RandomDataGenerator()
         self.testDataSet = self.objectFactory.randomInstanceOfEach()
 
+    @unittest.expectedFailure
     def runTest(self):
         for testItem in self.testDataSet:
             testItemWithModifications = self.objectFactory.objectVariationsOf(testItem)
