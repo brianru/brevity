@@ -40,6 +40,13 @@ def objectFromURLSafeKey(urlKey):
     """Get object instance from NDB using url safe key."""
     return objectFromKey(ndb.Key(urlsafe=urlKey))
 
+def keyFromObject(original_object):
+    return original_object.put()
+
+def urlSafeKeyFromObject(original_object):
+    return keyFromObject(original_object).urlsafe()
+
+
 # Data model
 class Agreement(ndb.Model):
     documents = ndb.KeyProperty(repeated=True, validator=isDocument)
