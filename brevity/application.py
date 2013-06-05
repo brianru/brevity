@@ -56,8 +56,13 @@ Tablet
 
 """
 
+import jinja2
 import webapp2
 import model
+
+#JINJA_ENVIRONMENT = jinja2.Environment(
+#        loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+#        extensions=['jinja2.ext.autoescape'])
 
 class MainPage(webapp2.RequestHandler):
     MAIN_PAGE_HTML = """\
@@ -105,8 +110,9 @@ class ViewPage(webapp2.RequestHandler):
             self.response.write(self.VIEW_PAGE_HTML %\
                     (model.objectFromURLSafeKey(url_safe_key)))
         else:
-            self.response.write(self.VIEW_PAGE_HTML % ('Explore Brevity!'))
-            # display randomInstanceOfEach()
+            self.objectFactory = model.SampleObjectFactory()
+            url_safe_key = model.urlSafeKeyFromObject(self.objectFactory.randomSocket()) 
+            self.redirect('/view/' + str(url_safe_key))
 
 
 class EditPage(webapp2.RequestHandler):
@@ -136,14 +142,16 @@ class EditPage(webapp2.RequestHandler):
             self.response.write(self.EDIT_PAGE_HTML %\
                     (url_safe_key, model.objectFromURLSafeKey(url_safe_key)))
         else:
-            self.redirect('/create/')
+            self.objectFactory = model.SampleObjectFactory()
+            url_safe_key = model.urlSafeKeyFromObject(self.objectFactory.randomSocket())
+            self.redirect('/edit/' + str(url_safe_key))
 
     def post(self, url_safe_key):
-        # reconstitute json from form text area
         self.request.get('content')
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(self.EDIT_PAGE_HTML)
         # translate contents of form into object
+
 
 class CreatePage(webapp2.RequestHandler):
     CREATE_PAGE_HTML = """\
