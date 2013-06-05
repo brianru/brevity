@@ -70,6 +70,9 @@ class RandomDataGenerator(object):
         with open('test/nounlist.txt', 'r') as f:
             self.noun_list = f.readlines()
 
+    def randomText(self):
+        return str(self.randomLinesOfText(3))
+
     def randomLinesOfText(self, numberOfLines):
             return [random.choice(self.sample_text)
                     for x in xrange(0,numberOfLines)]
@@ -105,12 +108,37 @@ class SampleObjectFactory(object):
         self.SAMPLE_SIZE = 3
         # add randomlyModify methods to model.(Socket, Node, Document, Amendment, Agreement)
     
+    def randomlyModifySocket(self, original_socket):
+        original_socket.text = self.dataGenerator.randomText()
+        return original_socket
+
+    def randomlyModifyNode(self, original_node):
+        original_node.sockets[0] = self.randomSocket().put()
+
+    def randomlyModifyDocument(self, original_document):
+        original_document.nodes[0] = self.randomNode().put()
+
+    def randomlyModifyAmendment(self, original_amendment):
+        pass
+
+    def randomlyModifyAgreement(self, original_agreement):
+        pass
+
     def randomlyModify(self, original_object):
-        target_attribute = original_object._values[original_object._values.keys()[0]]
-        if isinstance(target_attribute, (str, dict, type(None))):
+        if isinstance(original_object, (str, dict, type(None))):
             return self.dataGenerator.randomlyModify(target_attribute)
+        elif isinstance(original_object, Socket):
+            return self.randomlyModifySocket(original_object)
+        elif isinstance(original_object, Node):
+            return self.randomlyModifyNode(original_object)
+        elif isinstance(original_object, Document):
+            return self.randomlyModifyDocument(original_object)
+        elif isinstance(original_object, Amendment):
+            return self.randomlyModifyAmendment(original_object)
+        elif isinstance(original_object, Agreement):
+            return self.randomlyModifyAgreement(original_object)
         else:
-            self.randomlyModify(target_attribute)
+            raise db.BadValueError
     
     def objectVariationsOf(self, original_object):
         """For each property in original_object,
@@ -120,12 +148,9 @@ class SampleObjectFactory(object):
         """
         objectVariations = []
         for var in original_object._values:
-            if isinstance(var, (str, dict, None)):
-                objectCopy = copy.copy(original_object)
-                objectCopy._values.__setitem__(str(var), self.dataGenerator.randomlyModify(var))
-                objectVariations.append(objectCopy)
-            else:
-                self.objectVariationsOf(var)
+            objectCopy = copy.copy(original_object)
+            objectCopy._values.__setitem__(str(var), self.dataGenerator.randomlyModify(var))
+            objectVariations.append(objectCopy)
         return objectVariations
     
     def randomSocket(self):

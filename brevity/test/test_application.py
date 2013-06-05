@@ -13,7 +13,7 @@ import model
 sys.path.insert(0, '.')  # add parent folder to path list
 
 
-class WebtestTestCaseTemplate(unittest.TestCase):
+class AbstractWebtestBaseClass(unittest.TestCase):
     """Provide helper methods."""
     def setUp(self):
         self.testapp = webtest.TestApp(app.application)
@@ -40,13 +40,13 @@ class WebtestTestCaseTemplate(unittest.TestCase):
         if hasattr(self, 'testbed'):
             self.testbed.deactivate()
 
-class LoadMainPageTestCase(WebtestTestCaseTemplate):
+class LoadMainPageTestCase(AbstractWebtestBaseClass):
     def runTest(self):
         response = self.testapp.get('/')
         self.isValidHTTPResponse(response)
 
 
-class DisplayObjectOnWebTestCase(WebtestTestCaseTemplate):
+class DisplayObjectOnWebTestCase(AbstractWebtestBaseClass):
     """Test /view/(.*)."""
     def setUp(self):
         super(DisplayObjectOnWebTestCase, self).setUp()
@@ -58,21 +58,17 @@ class DisplayObjectOnWebTestCase(WebtestTestCaseTemplate):
         for key in self.test_data_keys:
             response = self.testapp.get('/view/' + key.urlsafe())
             self.assertTrue(self.isValidHTTPResponse(response))
-            self.assertTrue(self.HTTPResponseContains(response,
-                                                      str(key.get())))
+            self.assertTrue(self.HTTPResponseContains(response, str(key.get())))
 
 
-class ModifyDataFromWebTestCase(WebtestTestCaseTemplate):
+class ModifyDataFromWebTestCase(AbstractWebtestBaseClass):
     """Populate modify and submit HTML form, succesfully communicating with NDB at each end.
     Test /edit/(.*)
     
     """
     def setUp(self):
         super(ModifyDataFromWebTestCase, self).setUp()
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-        self.testbed.init_datastore_v3_stub()
-        self.testbed.init_memcache_stub()
+        self.testbed = self.activateDatastoreTestbed()
         self.objectFactory = model.SampleObjectFactory()
         self.dataGenerator = model.RandomDataGenerator()
         self.test_data_keys = self.putTestDataInNDB()
@@ -92,17 +88,20 @@ class ModifyDataFromWebTestCase(WebtestTestCaseTemplate):
             self.assertTrue(self.HTTPResponseContains(postRespose, str(key.get())))
 
 
-@unittest.skip("Stub")
 class CreateDataFromWebTestCase(unittest.TestCase):
-    pass
+    @unittest.skip("Stub")
+    def runTest(self):
+        self.assertEquals(0, 1)
 
-@unittest.skip("Stub")
 class ExportDataFromWebToXMLTestCase(unittest.TestCase):
-    pass
+    @unittest.skip("Stub")
+    def runTest(self):
+        self.assertEquals(0, 1)
 
-@unittest.skip("Stub")
 class ImportDataFromXMLToWebTestCase(unittest.TestCase):
-    pass
+    @unittest.skip("Stub")
+    def runTest(self):
+        self.assertEquals(0, 1)
 
 
 if __name__ == "__main__":

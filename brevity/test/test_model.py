@@ -92,11 +92,11 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
 
     @unittest.skip('stub')
     def testAmendment(self):
-        pass
+        self.assertEquals(0, 1)
     
     @unittest.skip('stub')
     def testAgreement(self):
-        pass
+        self.assertEquals(0, 1)
 
     def tearDown(self):
         self.testbed.deactivate()
