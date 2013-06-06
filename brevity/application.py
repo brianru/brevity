@@ -79,28 +79,12 @@ class MainPage(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
 class ViewPage(webapp2.RequestHandler):
-    VIEW_PAGE_HTML = """\
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Brevity</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- Bootstrap -->
-        <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-      </head>
-      <body>
-        <h1>%s</h1>
-        <script src="http://code.jquery.com/jquery.js"></script>
-        <script src="js/bootstrap.min.js"></script>
-      </body>
-    </html>
-    """
-    
     def get(self, url_safe_key):
-        self.response.headers['Content-Type'] = 'text/html'
         if url_safe_key is not '':
-            self.response.write(self.VIEW_PAGE_HTML %\
-                    (model.objectFromURLSafeKey(url_safe_key)))
+            self.response.headers['Content-Type'] = 'text/html'
+            template_values = {'object_to_display': model.objectFromURLSafeKey(url_safe_key)}
+            template = JINJA_ENVIRONMENT.get_template('views/viewpage.html')
+            self.response.write(template.render(template_values))
         else:
             self.objectFactory = model.SampleObjectFactory()
             url_safe_key = model.urlSafeKeyFromObject(self.objectFactory.randomSocket()) 
@@ -108,34 +92,16 @@ class ViewPage(webapp2.RequestHandler):
 
 
 class EditPage(webapp2.RequestHandler):
-    EDIT_PAGE_HTML = """\
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Brevity</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- Bootstrap -->
-        <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-      </head>
-      <body>
-        <form action="/edit/%s" method="post">
-          <div>Text:<br><textarea name="content" rows="9" cols="80">%s</textarea></div>
-          <div>Variables:<br><textarea name="variables" rows="9" cols="80">%s</textarea></div>
-          <div>Linked node id:<br><textarea name="linked_node" rows="1" cols="80">%s</textarea></div>
-          <div><input type="submit" value="Submit"></div>
-        </form>
-        <script src="http://code.jquery.com/jquery.js"></script>
-        <script src="js/bootstrap.min.js"></script>
-      </body>
-    </html>
-    """
-    
     def get(self, url_safe_key):
-        self.response.headers['Content-Type'] = 'text/html'
         if url_safe_key is not '':
+            self.response.headers['Content-Type'] = 'text/html'
             data_object = model.objectFromURLSafeKey(url_safe_key)
-            self.response.write(self.EDIT_PAGE_HTML %\
-                    (url_safe_key, data_object.text, data_object.variables, data_object.linked_node ))
+            template_values = {'socket_url_safe_key': url_safe_key,
+                               'socket_text': data_object.text,
+                               'socket_variables': data_object.variables,
+                               'socket_linked_node': data_object.linked_node}
+            template = JINJA_ENVIRONMENT.get_template('views/editpage.html')
+            self.response.write(template.render(template_values))
         else:
             self.objectFactory = model.SampleObjectFactory()
             url_safe_key = model.urlSafeKeyFromObject(self.objectFactory.randomSocket())
