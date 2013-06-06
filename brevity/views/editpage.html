@@ -1,17 +1,25 @@
 {% import 'views/editmacros.html' as editmacros %}
 <html>
   <head>
+    {% block header %}
     <title>Brevity</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    {% endblock header %}
   </head>
   <body>
+    {% block body %}
     <form action="/edit/{{ url_safe_key }}" method="post">
         {{ editmacros.editsocket(object_instance, url_safe_key) }}
     </form>
     <script src="http://code.jquery.com/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    {% endblock body %}
   </body>
+  <footer>
+  {% block footer %}
+  {% endblock foter %}
+  </footer>
 </html>
 

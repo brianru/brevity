@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    {% block head %}
+    {% block header %}
     <title>Brevity</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-    {% endblock head %}
+    {% endblock header %}
   </head>
   <body>
     {% block body %}
@@ -15,5 +15,9 @@
     <script src="js/bootstrap.min.js"></script>
     {% endblock body %}
   </body>
+  <footer>
+    {% block footer %}
+    {% endblock footer %}
+  </footer>
 </html>
 
