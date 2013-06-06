@@ -65,32 +65,18 @@ Tablet
 import jinja2
 import webapp2
 import model
+import os
 
-#JINJA_ENVIRONMENT = jinja2.Environment(
-#        loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
-#        extensions=['jinja2.ext.autoescape'])
+JINJA_ENVIRONMENT = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+        extensions=['jinja2.ext.autoescape'])
 
 class MainPage(webapp2.RequestHandler):
-    MAIN_PAGE_HTML = """\
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Brevity</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <!-- Bootstrap -->
-        <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-      </head>
-      <body>
-        <h1>%s</h1>
-        <script src="http://code.jquery.com/jquery.js"></script>
-        <script src="js/bootstrap.min.js"></script>
-      </body>
-    </html>
-    """
-    
     def get(self):
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.write(self.MAIN_PAGE_HTML % ('Hello, world!'))
+        template_values = {'welcome_message': 'Hello, world!'}
+        template = JINJA_ENVIRONMENT.get_template('/views/mainpage.html')
+        self.response.write(template.render(template_values))
 
 class ViewPage(webapp2.RequestHandler):
     VIEW_PAGE_HTML = """\
@@ -161,8 +147,10 @@ class EditPage(webapp2.RequestHandler):
         data_object.put()
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(self.EDIT_PAGE_HTML %\
-                (url_safe_key, data_object.text, data_object.variables, data_object.linked_node))
-        # translate contents of form into object
+                (url_safe_key,
+                 data_object.text,
+                 data_object.variables,
+                 data_object.linked_node))
     
 
 class CreatePage(webapp2.RequestHandler):
