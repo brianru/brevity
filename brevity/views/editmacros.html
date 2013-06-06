@@ -1,0 +1,53 @@
+{% macro edittext(text, key) -%}
+  <div>
+    Text:<br>
+    <textarea name="{{ key }}_text" rows="9" cols="80">{{ text }}</textarea>
+  </div>
+{%- endmacro %}
+
+{% macro editdict(dict, object_key) -%}
+  <div>
+    Variables: <br>
+    <p><table border="1">
+    {% for key in dict.keys() %}
+      <tr>
+      <td>{{ key }}</td>
+      <td><textarea name="{{ key }}_variables[{{ key }}]" rows = "1" cols="80">{{ dict[key] }}</textarea></td>
+      </tr>
+    {% endfor %}
+    </table></p>
+  </div>
+{%- endmacro %}
+
+{% macro editkey(key) -%}
+  <div>
+    id:<br>
+    <textarea name="{{ key }}_linked_node" rows="1" cols="80">{{ key }}</textarea>
+  </div>
+{%- endmacro %}
+
+{% macro editsocket(socket, key) -%}
+  {{ edittext(socket.text, key) }}
+  {{ editdict(socket.variables, key) }}
+  {{ editkey(socket.linked_node) }}
+{%- endmacro %}
+
+{% macro editnode(node) -%}
+  {% for socketkey in node.sockets %}
+   {{ editkey(socketkey) }}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro editdocument(document) -%}
+  {% for nodekey in document.nodes %}
+    {{ editkey(nodekey) }}
+  {% endfor %}
+  {{ editdict(document.variables) }}
+{%- endmacro %}
+
+{% macro editamendment(amendment) -%}
+{%- endmacro %}
+
+{% macro editagreement(agreement) -%}
+{%- endmacro %}
+

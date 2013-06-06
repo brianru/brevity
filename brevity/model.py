@@ -40,6 +40,9 @@ def objectFromURLSafeKey(urlKey):
     """Get object instance from NDB using url safe key."""
     return objectFromKey(ndb.Key(urlsafe=urlKey))
 
+def kindFromURLSafeKey(url_key):
+    return ndb.Key(urlsafe=url_key).kind()
+
 def keyFromObject(original_object):
     return original_object.put()
 

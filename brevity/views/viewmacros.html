@@ -1,0 +1,52 @@
+{% macro viewtext(text, key) -%}
+  <div>
+    Text:<br>
+    <p>{{ text }}</p>
+  </div>
+{%- endmacro %}
+
+{% macro viewdict(dict, object_key) -%}
+  <div>
+    Variables: <br>
+    <p><table border="1">
+    {% for key in dict.keys() %}
+      <tr>
+      <td>{{ key }}</td>
+      <td>{{ dict[key] }}</td>
+      </tr>
+    {% endfor %}
+    </table></p>
+  </div>
+{%- endmacro %}
+
+{% macro viewkey(key) -%}
+  <div>
+    id:<br>
+    <p>{{ key }}</p>
+  </div>
+{%- endmacro %}
+
+{% macro viewsocket(socket, key) -%}
+  {{ viewtext(socket.text, key) }}
+  {{ viewdict(socket.variables, key) }}
+  {{ viewkey(socket.linked_node) }}
+{%- endmacro %}
+
+{% macro viewnode(node) -%}
+  {% for socketkey in node.sockets %}
+   {{ viewkey(socketkey) }}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro viewdocument(document) -%}
+  {% for nodekey in document.nodes %}
+    {{ viewkey(nodekey) }}
+  {% endfor %}
+  {{ viewdict(document.variables) }}
+{%- endmacro %}
+
+{% macro viewamendment(amendment) -%}
+{%- endmacro %}
+
+{% macro viewagreement(agreement) -%}
+{%- endmacro %}

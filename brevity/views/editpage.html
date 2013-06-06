@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% import 'views/editmacros.html' as editmacros %}
 <html>
   <head>
     <title>Brevity</title>
@@ -7,11 +7,8 @@
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
   </head>
   <body>
-    <form action="/edit/{{ socket_url_safe_key }}" method="post">
-      <div>Text:<br><textarea name="content" rows="9" cols="80">{{ socket_text }}</textarea></div>
-      <div>Variables:<br><textarea name="variables" rows="9" cols="80">{{ socket_variables }}</textarea></div>
-      <div>Linked node id:<br><textarea name="linked_node" rows="1" cols="80">{{ socket_linked_node }}</textarea></div>
-      <div><input type="submit" value="Submit"></div>
+    <form action="/edit/{{ url_safe_key }}" method="post">
+        {{ editmacros.editsocket(object_instance, url_safe_key) }}
     </form>
     <script src="http://code.jquery.com/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>

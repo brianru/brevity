@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% import 'views/viewmacros.html' as viewmacros %}
 <html>
   <head>
     <title>Brevity</title>
@@ -7,7 +7,7 @@
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
   </head>
   <body>
-    <h1>{{ object_to_display }}</h1>
+    {{ viewmacros.viewsocket(object_instance, key) }}
     <script src="http://code.jquery.com/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
   </body>

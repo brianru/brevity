@@ -82,7 +82,8 @@ class ViewPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
         if url_safe_key is not '':
             self.response.headers['Content-Type'] = 'text/html'
-            template_values = {'object_to_display': model.objectFromURLSafeKey(url_safe_key)}
+            template_values = {'key': url_safe_key,
+                               'object_instance': model.objectFromURLSafeKey(url_safe_key)}
             template = JINJA_ENVIRONMENT.get_template('views/viewpage.html')
             self.response.write(template.render(template_values))
         else:
@@ -96,10 +97,8 @@ class EditPage(webapp2.RequestHandler):
         if url_safe_key is not '':
             self.response.headers['Content-Type'] = 'text/html'
             data_object = model.objectFromURLSafeKey(url_safe_key)
-            template_values = {'socket_url_safe_key': url_safe_key,
-                               'socket_text': data_object.text,
-                               'socket_variables': data_object.variables,
-                               'socket_linked_node': data_object.linked_node}
+            template_values = {'url_safe_key': url_safe_key,
+                               'object_instance': data_object}
             template = JINJA_ENVIRONMENT.get_template('views/editpage.html')
             self.response.write(template.render(template_values))
         else:
@@ -110,6 +109,7 @@ class EditPage(webapp2.RequestHandler):
     def post(self, url_safe_key):
         data_object = model.objectFromURLSafeKey(url_safe_key)
         data_object.text = self.request.get('content')
+        print('get items: %s' % self.request.POST.items())
         data_object.put()
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(self.EDIT_PAGE_HTML %\
@@ -117,12 +117,10 @@ class EditPage(webapp2.RequestHandler):
                  data_object.text,
                  data_object.variables,
                  data_object.linked_node))
+        
     
 
 class CreatePage(webapp2.RequestHandler):
-    CREATE_PAGE_HTML = """\
-    """
-
     def get(self):
         pass
 
