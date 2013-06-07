@@ -35,7 +35,7 @@ def isComponentType(proposedObject, objectValue, componentType):
 def presentationDictFromURLSafeKey(url_safe_key):
     return {
             'key': url_safe_key,
-            'kind': kindFromURLSafeKey(url_safe_key),
+            'kind': str(kindFromURLSafeKey(url_safe_key)).lower(),
             'instance': objectFromURLSafeKey(url_safe_key),
            } 
 

@@ -5,7 +5,7 @@ import os
 
 class WebPresentation(object):
     def __init__(self):
-        self.CHILD_TEMPLATES = os.listdir('./')
+        self.CHILD_TEMPLATES = os.listdir('./templates/')
 
     def templateForObject(self, action, object_kind):
         return self.getTemplateIfValid(action + object_kind + '.html')
@@ -18,6 +18,13 @@ class WebPresentation(object):
             return proposed_template
         else:
             raise KeyError
+
+    def forPresentationDict(self, presentation_dict):
+        return self.getTemplateIfValid(self.template_path_from(presentation_dict))
+
+    def template_path_from(self, presentation_dict):
+        return presentation_dict['action'] + presentation_dict['kind'] + '.html'
+
 
 class MobileWebPresentation(object):
     pass

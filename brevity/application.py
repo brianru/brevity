@@ -78,7 +78,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
-        self.templates = view.WebTemplates()
+        self.templates = view.WebPresentation()
         self.response.headers['Content-Type'] = 'text/html'
         template_values = {'welcome_message': 'Hello, world!'}
         template = JINJA_ENVIRONMENT.get_template(self.templates.templateForAction('main'))
@@ -86,10 +86,11 @@ class MainPage(webapp2.RequestHandler):
 
 class ViewPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
-        self.gen_template = view.WebTemplates()
+        self.gen_template = view.WebPresentation()
         if url_safe_key is not '':
             self.response.headers['Content-Type'] = 'text/html'
             template_values = model.presentationDictFromURLSafeKey(url_safe_key)
+            template_values.update({'action': 'view'})
             template_for_values = self.gen_template.forPresentationDict(template_values)
             template = JINJA_ENVIRONMENT.get_template(template_for_values)
             self.response.write(template.render(template_values))
@@ -101,7 +102,7 @@ class ViewPage(webapp2.RequestHandler):
 
 class EditPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
-        self.gen_template = view.webTemplates()
+        self.gen_template = view.WebPresentation()
         if url_safe_key is not '':
             self.response.headers['Content-Type'] = 'text/html'
             template_values = model.presentationDictFromURLSafeKey(url_safe_key)
