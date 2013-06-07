@@ -86,15 +86,12 @@ class MainPage(webapp2.RequestHandler):
 
 class ViewPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
-        self.templates = view.WebTemplates()
+        self.gen_template = view.WebTemplates()
         if url_safe_key is not '':
             self.response.headers['Content-Type'] = 'text/html'
-            template_values = {
-                              'key': url_safe_key,
-                              'object_kind': model.kindFromURLSafeKey(url_safe_key),  
-                              'object_instance': model.objectFromURLSafeKey(url_safe_key),
-                              }
-            template = JINJA_ENVIRONMENT.get_template(self.templates.templateForObject('view', template_values['object_kind']))
+            template_values = model.presentationDictFromURLSafeKey(url_safe_key)
+            template_for_values = self.gen_template.forPresentationDict(template_values)
+            template = JINJA_ENVIRONMENT.get_template(template_for_values)
             self.response.write(template.render(template_values))
         else:
             self.objectFactory = model.SampleObjectFactory()
@@ -104,22 +101,19 @@ class ViewPage(webapp2.RequestHandler):
 
 class EditPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
-        self.templates = view.webTemplates()
+        self.gen_template = view.webTemplates()
         if url_safe_key is not '':
             self.response.headers['Content-Type'] = 'text/html'
-            data_object = model.objectFromURLSafeKey(url_safe_key)
-            template_values = {
-                              'url_safe_key': url_safe_key,
-                              'object_kind': model.kindFromURLSafeKey(url_safe_key),
-                              'object_instance': data_object,
-                              }
-            template = JINJA_ENVIRONMENT.get_template(self.templates.templateForObject('edit', template_values['object_kind']))
+            template_values = model.presentationDictFromURLSafeKey(url_safe_key)
+            template_for_values = self.gen_template.forPresentationDict(template_values)
+            template = JINJA_ENVIRONMENT.get_template(template_for_values)
             self.response.write(template.render(template_values))
         else:
             self.objectFactory = model.SampleObjectFactory()
             url_safe_key = model.urlSafeKeyFromObject(self.objectFactory.randomSocket())
             self.redirect('/edit/' + str(url_safe_key))
 
+    # TODO Refactor editpage post request.
     def post(self, url_safe_key):
         data_object = model.objectFromURLSafeKey(url_safe_key)
         data_object.text = self.request.get('content')
@@ -133,7 +127,6 @@ class EditPage(webapp2.RequestHandler):
                  data_object.linked_node
                  ))
         
-    
 
 class CreatePage(webapp2.RequestHandler):
     def get(self):

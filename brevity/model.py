@@ -32,6 +32,13 @@ def isComponentType(proposedObject, objectValue, componentType):
     else:
         raise db.BadValueError
 
+def presentationDictFromURLSafeKey(url_safe_key):
+    return {
+            'key': url_safe_key,
+            'kind': kindFromURLSafeKey(url_safe_key),
+            'instance': objectFromURLSafeKey(url_safe_key),
+           } 
+
 def objectFromKey(key):
     """Get object instance from NDB using key."""
     return key.get()
@@ -136,7 +143,7 @@ class SampleObjectFactory(object):
 
     def randomlyModify(self, original_object):
         if isinstance(original_object, (str, dict, type(None))):
-            return self.dataGenerator.randomlyModify(target_attribute)
+            return self.dataGenerator.randomlyModify(original_object)
         elif isinstance(original_object, Socket):
             return self.randomlyModifySocket(original_object)
         elif isinstance(original_object, Node):
