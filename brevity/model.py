@@ -32,7 +32,7 @@ def isComponentType(proposedObject, objectValue, componentType):
     else:
         raise db.BadValueError
 
-def presentationDictFromURLSafeKey(url_safe_key):
+def view_data_from(url_safe_key):
     return {
             'key': url_safe_key,
             'kind': str(kindFromURLSafeKey(url_safe_key)).lower(),
@@ -53,7 +53,7 @@ def kindFromURLSafeKey(url_key):
 def keyFromObject(original_object):
     return original_object.put()
 
-def urlSafeKeyFromObject(original_object):
+def url_safe_key_from(original_object):
     return keyFromObject(original_object).urlsafe()
 
 

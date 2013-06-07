@@ -1,17 +1,17 @@
-{% import 'views/viewmacros.html' as viewmacros %}
+{% import 'templates/viewmacros.html' as viewmacros %}
 <html>
   <head>
-    {% include 'views/header.html' -%}
+    {% include 'templates/header.html' -%}
   </head>
   <body>
     {% block body %}
-    {{ viewmacros.viewsocket(object_instance, key) }}
+    {{ viewmacros.templatesocket(object_instance, key) }}
     <script src="http://code.jquery.com/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
     {% endblock body %}
   </body>
   <footer>
-    {% include 'views/footer.html' %}
+    {% include 'templates/footer.html' %}
   </footer>
 </html>
 
