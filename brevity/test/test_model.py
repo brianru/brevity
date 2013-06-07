@@ -63,6 +63,7 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         self.assertRaises(db.BadValueError, lambda: model.Socket(text=0))
         self.assertRaises(db.BadValueError, lambda: model.Socket(variables=0))
         self.assertRaises(db.BadValueError, lambda: model.Socket(linked_node=0))
+        ####### TEST LINKED NODES #######
 
     def testNode(self):
         nodeVariableKeys = []
@@ -90,11 +91,9 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         self.assertRaises(db.BadValueError, lambda: model.Document(nodes=self.objectFactory.randomSocket().put()))
         self.assertRaises(db.BadValueError, lambda: model.Document(variables=0))
 
-    @unittest.skip('stub')
     def testAmendment(self):
         self.assertEquals(0, 1)
     
-    @unittest.skip('stub')
     def testAgreement(self):
         self.assertEquals(0, 1)
 

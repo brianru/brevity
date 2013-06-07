@@ -1,12 +1,7 @@
 {% import 'views/editmacros.html' as editmacros %}
 <html>
   <head>
-    {% block header %}
-    <title>Brevity</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-    {% endblock header %}
+    {% include 'views/header.html' -%}
   </head>
   <body>
     {% block body %}
@@ -18,8 +13,7 @@
     {% endblock body %}
   </body>
   <footer>
-  {% block footer %}
-  {% endblock foter %}
+    {% include 'views/footer.html' %}
   </footer>
 </html>
 

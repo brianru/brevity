@@ -1,27 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: iso-8859-15 -*-
 
-class WebViewTools(object):
-    """DON'T FORGET VIEW SHOULD BE DUMB!"""
+import os
+
+class WebPresentation(object):
     def __init__(self):
-        pass
+        self.CHILD_TEMPLATES = os.listdir('./')
 
-    def header_template(self):
-        pass
+    def templateForObject(self, action, object_kind):
+        return self.getTemplateIfValid(action + object_kind + '.html')
 
-    def footer_template(self):
-        pass
+    def templateForAction(self, action):
+        return self.getTemplateIfValid(action + 'page.html')
 
-    def webpage_for_task_and_object(self):
-        pass
+    def getTemplateIfValid(self, proposed_template):
+        if proposed_template in self.CHILD_TEMPLATES:
+            return proposed_template
+        else:
+            raise KeyError
 
-    def main_body(self):
-        pass
-
-    def view_body(self):
-        pass
-
-    def edit_body(self):
-        pass
-
-
+class MobileWebPresentation(object):
+    pass
