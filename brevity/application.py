@@ -57,7 +57,7 @@ Smartphone
 :: iOS
 :: Android
 Tablet
-;: iOS
+:: iOS
 :: Android
 
 """
@@ -68,14 +68,14 @@ import model
 import os
 
 JINJA_ENVIRONMENT = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+        loader=jinja2.FileSystemLoader(os.path.dirname(__file__)+"/templates"),
         extensions=['jinja2.ext.autoescape'])
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-Type'] = 'text/html'
         template_values = {'welcome_message': 'Hello, world!'}
-        template = JINJA_ENVIRONMENT.get_template('/views/mainpage.html')
+        template = JINJA_ENVIRONMENT.get_template('mainpage.html')
         self.response.write(template.render(template_values))
 
 class ViewPage(webapp2.RequestHandler):
@@ -84,7 +84,7 @@ class ViewPage(webapp2.RequestHandler):
             self.response.headers['Content-Type'] = 'text/html'
             template_values = {'key': url_safe_key,
                                'object_instance': model.objectFromURLSafeKey(url_safe_key)}
-            template = JINJA_ENVIRONMENT.get_template('views/viewpage.html')
+            template = JINJA_ENVIRONMENT.get_template('viewpage.html')
             self.response.write(template.render(template_values))
         else:
             self.objectFactory = model.SampleObjectFactory()
@@ -99,7 +99,7 @@ class EditPage(webapp2.RequestHandler):
             data_object = model.objectFromURLSafeKey(url_safe_key)
             template_values = {'url_safe_key': url_safe_key,
                                'object_instance': data_object}
-            template = JINJA_ENVIRONMENT.get_template('views/editpage.html')
+            template = JINJA_ENVIRONMENT.get_template('editpage.html')
             self.response.write(template.render(template_values))
         else:
             self.objectFactory = model.SampleObjectFactory()
