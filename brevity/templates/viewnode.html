@@ -1,0 +1,8 @@
+{% extends "templates/view.html" %}
+{% import "templates/viewmacros.html" as macros %}
+{% block content %}
+  {% for socketkey in instance.sockets %}
+   {{ macros.viewkey(socketkey) }}
+  {% endfor %}
+{% endblock content %}
+

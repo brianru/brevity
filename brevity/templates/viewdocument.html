@@ -1,0 +1,9 @@
+{% extends "templates/view.html" %}
+{% import "templates/viewmacros.html" as macros %}
+{% block content %}
+  {% for nodekey in instance.nodes %}
+    {{ macros.viewkey(nodekey) }}
+  {% endfor %}
+  {{ macros.viewdict(instance.variables) }}
+{% endblock content %}
+

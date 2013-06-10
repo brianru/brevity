@@ -26,27 +26,3 @@
   </div>
 {%- endmacro %}
 
-{% macro viewsocket(socket, key) -%}
-  {{ viewtext(socket.text, key) }}
-  {{ viewdict(socket.variables, key) }}
-  {{ viewkey(socket.linked_node) }}
-{%- endmacro %}
-
-{% macro viewnode(node) -%}
-  {% for socketkey in node.sockets %}
-   {{ viewkey(socketkey) }}
-  {% endfor %}
-{%- endmacro %}
-
-{% macro viewdocument(document) -%}
-  {% for nodekey in document.nodes %}
-    {{ viewkey(nodekey) }}
-  {% endfor %}
-  {{ viewdict(document.variables) }}
-{%- endmacro %}
-
-{% macro viewamendment(amendment) -%}
-{%- endmacro %}
-
-{% macro viewagreement(agreement) -%}
-{%- endmacro %}

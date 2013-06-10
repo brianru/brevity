@@ -1,68 +1,5 @@
 #!/usr/bin/env python
-"""Brevity. It's github+legos for lawyers.
-#################
 
------------------
------- API ------
------------------
-
-#########################
-
------------------
------ MODEL -----
-_________________
-model.py
-    Socket
-    Node
-    Document
-    Amendment
-    Agreement
-    RandomDataGenerator
-    SampleObjectFactory
-
-Define and provide interface to data model. Ensure consistency.
-
-------------------
------- VIEW ------
-------------------
-Web Presentation Layer
-TEMPLATES
-
-Construct view per controller's instructions. Display data using appropriate resources.
-
-------------------
---- CONTROLLER ---
-------------------
-web_controller.py
-    MainPage
-    ViewPage
-    EditPage
-    CreatePage
-
-CRUD data with Model. Tell view(s) what to display.
-
-#################
-
------------------
----- GAE::NDB ---- (MODEL)
------------------
-
-------------------
--- GAE::WEBAPP2 -- (CONTROLLER)
------------------
-
----------------------
-------JINJA2------- (VIEW)
--------------------
-Desktop
-Smartphone
-:: iOS
-:: Android
-Tablet
-;: iOS
-:: Android
-
-"""
 import webapp2
 
 import model
@@ -89,22 +26,23 @@ class ViewPage(webapp2.RequestHandler):
             values.update({'action': 'view'})
             self.response.write(self.gen_template.render_template_for(values))
         else:
-            self.objectFactory = model.SampleObjectFactory()
-            url_safe_key = model.urlsafekey_from(self.objectFactory.randomSocket())
+            factory = model.SampleObjectFactory()
+            sample_socket = factory.random_document()
+            url_safe_key = model.urlsafekey_from(sample_socket)
             self.redirect('/view/' + str(url_safe_key))
 
 
 class EditPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
-        self.template_generator = view.WebTemplateGenerator()
+        self.gen_template = view.WebTemplateGenerator()
         if url_safe_key is not '':
             self.response.headers['Content-Type'] = 'text/html'
-            template_values = model.view_data_from(url_safe_key)
-            template_values.update({'action': 'edit'})
-            self.response.write(self.template_generator.render_template_for(template_values))
+            values = model.view_data_from(url_safe_key)
+            values.update({'action': 'edit'})
+            self.response.write(self.gen_template.render_template_for(values))
         else:
-            self.objectFactory = model.SampleObjectFactory()
-            url_safe_key = model.urlsafekey_from(self.objectFactory.randomSocket())
+            self.factory = model.SampleObjectFactory()
+            url_safe_key = model.urlsafekey_from(self.factory.random_socket())
             self.redirect('/edit/' + str(url_safe_key))
 
     # TODO Refactor editpage post request.
@@ -115,12 +53,12 @@ class EditPage(webapp2.RequestHandler):
         data_object.put()
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(self.EDIT_PAGE_HTML % (
-                 url_safe_key,
-                 data_object.text,
-                 data_object.variables,
-                 data_object.linked_node
-                 ))
-        
+            url_safe_key,
+            data_object.text,
+            data_object.variables,
+            data_object.linked_node,
+        ))
+
 
 class CreatePage(webapp2.RequestHandler):
     def get(self):

@@ -1,0 +1,16 @@
+<html>
+  <head>
+    {% include "templates/header.html" -%}
+  </head>
+  <body>
+    {% block content %}
+    Is this working?
+    {% endblock content %}
+    <script src="http://code.jquery.com/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+  <footer>
+    {% include "templates/footer.html" %}
+  </footer>
+</html>
+
