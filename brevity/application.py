@@ -69,25 +69,28 @@ import model
 import view
 
 
-
 class MainPage(webapp2.RequestHandler):
     def get(self):
-        self.template_generator = view.WebTemplateGenerator()
+        self.gen_template = view.WebTemplateGenerator()
         self.response.headers['Content-Type'] = 'text/html'
-        template_values = {'action': 'main', 'welcome_message': 'Hello, world!'}
-        self.response.write(self.template_generator.render_template_for(template_values))
+        values = {
+            'action': 'main',
+            'welcome_message': 'Hello, world!',
+        }
+        self.response.write(self.gen_template.render_template_for(values))
+
 
 class ViewPage(webapp2.RequestHandler):
     def get(self, url_safe_key):
-        self.template_generator = view.WebTemplateGenerator()
+        self.gen_template = view.WebTemplateGenerator()
         if url_safe_key is not '':
             self.response.headers['Content-Type'] = 'text/html'
-            template_values = model.view_data_from(url_safe_key)
-            template_values.update({'action': 'view'})
-            self.response.write(self.template_generator.render_template_for(template_values))
+            values = model.view_data_from(url_safe_key)
+            values.update({'action': 'view'})
+            self.response.write(self.gen_template.render_template_for(values))
         else:
             self.objectFactory = model.SampleObjectFactory()
-            url_safe_key = model.url_safe_key_from(self.objectFactory.randomSocket()) 
+            url_safe_key = model.urlsafekey_from(self.objectFactory.randomSocket())
             self.redirect('/view/' + str(url_safe_key))
 
 
@@ -101,12 +104,12 @@ class EditPage(webapp2.RequestHandler):
             self.response.write(self.template_generator.render_template_for(template_values))
         else:
             self.objectFactory = model.SampleObjectFactory()
-            url_safe_key = model.url_safe_key_from(self.objectFactory.randomSocket())
+            url_safe_key = model.urlsafekey_from(self.objectFactory.randomSocket())
             self.redirect('/edit/' + str(url_safe_key))
 
     # TODO Refactor editpage post request.
     def post(self, url_safe_key):
-        data_object = model.objectFromURLSafeKey(url_safe_key)
+        data_object = model.instance_from_urlsafe(url_safe_key)
         data_object.text = self.request.get('content')
         print('get items: %s' % self.request.POST.items())
         data_object.put()

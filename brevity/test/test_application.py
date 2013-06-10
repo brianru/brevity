@@ -18,47 +18,51 @@ class AbstractWebtestBaseClass(unittest.TestCase):
     def setUp(self):
         self.testapp = webtest.TestApp(app.application)
 
-    def putTestDataInNDB(self):
-        return [item.put() for item in self.objectFactory.randomInstanceOfEach()]
+    def put_test_data_in_ndb(self):
+        return [item.put()
+                for item
+                in self.factory.random_instance_of_each()]
 
-    def isValidHTTPResponse(self, response):
+    def is_valid_response(self, response):
         """Verify input response status is OK and content type is html."""
-        return response.status_int == 200 and response.content_type == 'text/html'
+        return (response.status_int == 200 and
+                response.content_type == 'text/html')
 
-    def HTTPResponseContains(self, response, target_object):
+    def response_contains(self, response, target_object):
         """Verify inputted response contains inputted object."""
         return str(target_object) in response.normal_body
-    
-    def activateDatastoreTestbed(self):
-        activeTestbed = testbed.Testbed()
-        activeTestbed.activate()
-        activeTestbed.init_datastore_v3_stub()
-        activeTestbed.init_memcache_stub()
-        return activeTestbed
+
+    def activate_datastore_testbed(self):
+        active_testbed = testbed.Testbed()
+        active_testbed.activate()
+        active_testbed.init_datastore_v3_stub()
+        active_testbed.init_memcache_stub()
+        return active_testbed
 
     def tearDown(self):
         if hasattr(self, 'testbed'):
             self.testbed.deactivate()
 
+
 class LoadMainPageTestCase(AbstractWebtestBaseClass):
     def runTest(self):
         response = self.testapp.get('/')
-        self.isValidHTTPResponse(response)
+        self.is_valid_response(response)
 
 
 class DisplayObjectOnWebTestCase(AbstractWebtestBaseClass):
     """Test /view/(.*)."""
     def setUp(self):
         super(DisplayObjectOnWebTestCase, self).setUp()
-        self.testbed = self.activateDatastoreTestbed()
-        self.objectFactory = model.SampleObjectFactory()
-        self.test_data_keys = self.putTestDataInNDB()
+        self.testbed = self.activate_datastore_testbed()
+        self.factory = model.SampleObjectFactory()
+        self.test_data_keys = self.put_test_data_in_ndb()
 
     def runTest(self):
         for key in self.test_data_keys:
             response = self.testapp.get('/view/' + key.urlsafe())
-            self.assertTrue(self.isValidHTTPResponse(response))
-            self.assertTrue(self.HTTPResponseContains(response, str(key.get())))
+            self.assertTrue(self.is_valid_response(response))
+            self.assertTrue(self.response_contains(response, str(key.get())))
 
 
 class ModifyDataFromWebTestCase(AbstractWebtestBaseClass):
@@ -68,28 +72,28 @@ class ModifyDataFromWebTestCase(AbstractWebtestBaseClass):
     """
     def setUp(self):
         super(ModifyDataFromWebTestCase, self).setUp()
-        self.testbed = self.activateDatastoreTestbed()
-        self.objectFactory = model.SampleObjectFactory()
-        self.dataGenerator = model.RandomDataGenerator()
-        self.test_data_keys = self.putTestDataInNDB()
+        self.testbed = self.activate_datastore_testbed()
+        self.factory = model.SampleObjectFactory()
+        self.gen_data = model.RandomDataGenerator()
+        self.test_data_keys = self.put_test_data_in_ndb()
 
     def runTest(self):
         for key in self.test_data_keys:
-            getResponse = self.testapp.get('/edit/' + key.urlsafe())
-            self.assertTrue(self.isValidHTTPResponse(getResponse))
-            #self.assertTrue(self.HTTPResponseContains(getResponse, str(key.get())))
-            form = getResponse.form
+            get_response = self.testapp.get('/edit/' + key.urlsafe())
+            self.assertTrue(self.is_valid_response(get_response))
+            #self.assertTrue(self.response_contains(get_response, str(key.get())))
+            form = get_response.form
             self.assertEquals(form.action, '/edit/' + key.urlsafe())
             test_object = key.get()
             self.assertEquals(test_object.text, form['content'].value)
             self.assertIn(str(test_object.variables), form['variables'].value)
             #self.assertEquals(test_object.linked_node, form['linked_node'].value)
-            #form['content'].value = self.dataGenerator.randomlyModify(key.get())
-            postResponse = form.submit()
-            self.assertTrue(self.isValidHTTPResponse(postResponse))
-            self.assertTrue(self.HTTPResponseContains(postResponse, str(key.get())))
-            self.assertNotEquals(getResponse.normal_body, postResponse.normal_body)
-            self.assertTrue(self.HTTPResponseContains(postRespose, str(key.get())))
+            #form['content'].value = self.gen_data.randomly_nodify(key.get())
+            post_response = form.submit()
+            self.assertTrue(self.is_valid_response(post_response))
+            self.assertTrue(self.response_contains(post_response, str(key.get())))
+            self.assertNotEquals(get_response.normal_body, post_response.normal_body)
+            self.assertTrue(self.response_contains(post_response, str(key.get())))
 
 
 class CreateDataFromWebTestCase(unittest.TestCase):

@@ -13,25 +13,25 @@ class WebTemplateGenerator(object):
     def __init__(self):
         self.CHILD_TEMPLATES = os.listdir('./templates/')
 
-    def template_selector(self, action, kind=''):
-        return '/templates/' + self.getTemplateIfValid(action + kind + 'page.html')
+    def _template_selector(self, action, kind=''):
+        return '/templates/' + self._get_template_if_valid(action + kind + 'page.html')
 
-    def template_for(self, variables):
+    def _template_for(self, variables):
         if ('action', 'kind') in variables.keys():
-            return self.template_selector(variables['action'], variables['kind'])
+            return self._template_selector(variables['action'], variables['kind'])
         elif 'action' in variables.keys():
-            return self.template_selector(variables['action'])
+            return self._template_selector(variables['action'])
         else:
             raise KeyError
 
-    def getTemplateIfValid(self, proposed_template):
+    def _get_template_if_valid(self, proposed_template):
         if proposed_template in self.CHILD_TEMPLATES:
             return proposed_template
         else:
             raise KeyError
 
     def render_template_for(self, variables):
-        jinja_template = JINJA_ENVIRONMENT.get_template(self.template_for(variables))
+        jinja_template = JINJA_ENVIRONMENT.get_template(self._template_for(variables))
         return jinja_template.render(variables)
 
 

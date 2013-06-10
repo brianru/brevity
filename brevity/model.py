@@ -7,75 +7,90 @@ import sys
 
 from google.appengine.ext import ndb, db
 
+
 # Validators
-def isDictionary(proposedObject, objectValue):
-    """Check if objectValue is of type dict."""
-    if isinstance(objectValue, dict):
+def _is_dictionary(proposed_object, object_values):
+    """Check if object_values is of type dict."""
+    if isinstance(object_values, dict):
         return None
     else:
         raise db.BadValueError
 
-def isSocket(proposedObject, objectValue):
-    """Check if objectValue is a key for type Socket."""
-    return isComponentType(proposedObject, objectValue, 'Socket')
 
-def isNode(proposedObject, objectValue):
-    """Check if objectValue is a key for type Node."""
-    return isComponentType(proposedObject, objectValue, 'Node')
+def _is_socket(proposed_object, object_values):
+    """Check if object_values is a key for type Socket."""
+    return _is_data_type(proposed_object, object_values, 'Socket')
 
-def isDocument(proposedObject, objectValue):
-    return isComponentType(proposedObject, objectValue, 'Document')
 
-def isComponentType(proposedObject, objectValue, componentType):
-    if objectValue.kind() == componentType:
+def _is_node(proposed_object, object_values):
+    """Check if object_values is a key for type Node."""
+    return _is_data_type(proposed_object, object_values, 'Node')
+
+
+def _is_document(proposed_object, object_values):
+    return _is_data_type(proposed_object, object_values, 'Document')
+
+
+def _is_data_type(proposed_object, object_values, object_type):
+    if object_values.kind() == object_type:
         return None
     else:
         raise db.BadValueError
+
 
 def view_data_from(url_safe_key):
     return {
-            'key': url_safe_key,
-            'kind': str(kindFromURLSafeKey(url_safe_key)).lower(),
-            'instance': objectFromURLSafeKey(url_safe_key),
-           } 
+        'key': url_safe_key,
+        'kind': str(type_from_urlsafe(url_safe_key)).lower(),
+        'instance': instance_from_urlsafe(url_safe_key),
+    }
 
-def objectFromKey(key):
+
+def _instance_from(key):
     """Get object instance from NDB using key."""
     return key.get()
 
-def objectFromURLSafeKey(urlKey):
-    """Get object instance from NDB using url safe key."""
-    return objectFromKey(ndb.Key(urlsafe=urlKey))
 
-def kindFromURLSafeKey(url_key):
+def instance_from_urlsafe(key):
+    """Get object instance from NDB using url safe key."""
+    return _instance_from(ndb.Key(urlsafe=key))
+
+
+def type_from_urlsafe(url_key):
     return ndb.Key(urlsafe=url_key).kind()
 
-def keyFromObject(original_object):
-    return original_object.put()
 
-def url_safe_key_from(original_object):
-    return keyFromObject(original_object).urlsafe()
+def _key_from(instance):
+    return instance.put()
+
+
+def urlsafekey_from(original_object):
+    return _key_from(original_object).urlsafe()
 
 
 # Data model
 class Agreement(ndb.Model):
-    documents = ndb.KeyProperty(repeated=True, validator=isDocument)
-    meta_data = ndb.JsonProperty(validator=isDictionary)
+    documents = ndb.KeyProperty(repeated=True, validator=_is_document)
+    meta_data = ndb.JsonProperty(validator=_is_dictionary)
+
 
 class Document(ndb.Model):
-    nodes = ndb.KeyProperty(repeated=True, validator=isNode)
-    variables = ndb.JsonProperty(validator=isDictionary)
+    nodes = ndb.KeyProperty(repeated=True, validator=_is_node)
+    variables = ndb.JsonProperty(validator=_is_dictionary)
+
 
 class Amendment(Document):
     old_obj = ndb.KeyProperty()
     new_obj = ndb.KeyProperty()
 
+
 class Node(ndb.Model):
-    sockets = ndb.KeyProperty(repeated=True, validator=isSocket)
+    sockets = ndb.KeyProperty(repeated=True, validator=_is_socket)
+
 
 class Socket(ndb.Model):
     text = ndb.StringProperty()
-    variables = ndb.JsonProperty(validator=isDictionary)
+    variables = ndb.JsonProperty(validator=_is_dictionary)
     linked_node = ndb.StructuredProperty(Node)
 
 
@@ -87,23 +102,23 @@ class RandomDataGenerator(object):
         with open('test/nounlist.txt', 'r') as f:
             self.noun_list = f.readlines()
 
-    def randomText(self):
-        return str(self.randomLinesOfText(3))
+    def random_text(self):
+        return str(self.random_lines_of_text(3))
 
-    def randomLinesOfText(self, numberOfLines):
+    def random_lines_of_text(self, numberOfLines):
             return [random.choice(self.sample_text)
-                    for x in xrange(0,numberOfLines)]
+                    for x in xrange(0, numberOfLines)]
 
-    def randomDictionary(self, size):
-        return self.randomDictionaryFromKeys(self.randomVariableKeys(size))
+    def random_dict(self, size):
+        return self.random_dict_from(self.random_dict_keys(size))
 
-    def randomVariableKeys(self, numberOfKeys):
-        return [random.randint(0,sys.maxint) for x in xrange(0,numberOfKeys)]
-    
-    def randomDictionaryFromKeys(self, keys):
-        return dict(zip(keys, [random.choice(self.noun_list) for i in keys])) 
+    def random_dict_keys(self, num_keys):
+        return [random.randint(0, sys.maxint) for x in xrange(0, num_keys)]
 
-    def randomlyModify(self, original_object):
+    def random_dict_from(self, keys):
+        return dict(zip(keys, [random.choice(self.noun_list) for i in keys]))
+
+    def randomly_change(self, original_object):
         if original_object is None:
             return None
         elif isinstance(original_object, str):
@@ -113,90 +128,105 @@ class RandomDataGenerator(object):
         else:
             raise db.BadValueError
 
+
 class SampleObjectFactory(object):
     """Define a language for this abstraction layer.
-    Keys = 
-    Instance = 
-    Variable = 
+    Keys =
+    Instance =
+    Variable =
 
     """
     def __init__(self):
-        self.dataGenerator = RandomDataGenerator()
+        self.gen_data = RandomDataGenerator()
         self.SAMPLE_SIZE = 3
-        # add randomlyModify methods to model.(Socket, Node, Document, Amendment, Agreement)
-    
-    def randomlyModifySocket(self, original_socket):
-        original_socket.text = self.dataGenerator.randomText()
+        # add randomlyModify methods to model.(Socket, Node, ...)
+
+    def _randomly_modify_socket(self, original_socket):
+        original_socket.text = self.gen_data.random_text()
         return original_socket
 
-    def randomlyModifyNode(self, original_node):
-        original_node.sockets[0] = self.randomSocket().put()
+    def _randomly_modify_node(self, original_node):
+        original_node.sockets[0] = self.random_socket().put()
 
-    def randomlyModifyDocument(self, original_document):
-        original_document.nodes[0] = self.randomNode().put()
+    def _randomly_modify_document(self, original_document):
+        original_document.nodes[0] = self.random_node().put()
 
-    def randomlyModifyAmendment(self, original_amendment):
+    def _randomly_modify_amendment(self, original_amendment):
         pass
 
-    def randomlyModifyAgreement(self, original_agreement):
+    def _randomly_modify_agreement(self, original_agreement):
         pass
 
-    def randomlyModify(self, original_object):
+    # TODO refactor to remove massive switch block
+    def randomly_modify(self, original_object):
         if isinstance(original_object, (str, dict, type(None))):
-            return self.dataGenerator.randomlyModify(original_object)
+            return self.gen_data.randomly_change(original_object)
         elif isinstance(original_object, Socket):
-            return self.randomlyModifySocket(original_object)
+            return self._randomly_modify_socket(original_object)
         elif isinstance(original_object, Node):
-            return self.randomlyModifyNode(original_object)
+            return self._randomly_modify_node(original_object)
         elif isinstance(original_object, Document):
-            return self.randomlyModifyDocument(original_object)
+            return self._randomly_modify_document(original_object)
         elif isinstance(original_object, Amendment):
-            return self.randomlyModifyAmendment(original_object)
+            return self._randomly_modify_amendment(original_object)
         elif isinstance(original_object, Agreement):
-            return self.randomlyModifyAgreement(original_object)
+            return self._randomly_modify_agreement(original_object)
         else:
             raise db.BadValueError
-    
-    def objectVariationsOf(self, original_object):
+
+    def variations_of(self, original_object):
         """For each property in original_object,
         create a copy of original_object,
         randomlyModify attribute in copy
-        
+
         """
-        objectVariations = []
+        object_varations = []
         for var in original_object._values:
-            objectCopy = copy.copy(original_object)
-            objectCopy._values.__setitem__(str(var), self.dataGenerator.randomlyModify(var))
-            objectVariations.append(objectCopy)
-        return objectVariations
-    
-    def randomSocket(self):
-        return Socket(text=str(self.dataGenerator.randomLinesOfText(self.SAMPLE_SIZE)),
-                         variables=self.dataGenerator.randomDictionary(self.SAMPLE_SIZE),
-                         linked_node=None)
+            object_copy = copy.copy(original_object)
+            object_copy._values.__setitem__(
+                str(var),
+                self.gen_data.randomly_change(var),
+            )
+            object_varations.append(object_copy)
+        return object_varations
 
-    def randomSocketFromKeys(self, keys):
-        return Socket(text=str(self.dataGenerator.randomLinesOfText(self.SAMPLE_SIZE)),
-                         variables=self.dataGenerator.randomDictionaryFromKeys(keys),
-                         linked_node=None)
+    def random_socket(self):
+        return Socket(
+            text=str(self.gen_data.random_lines_of_text(self.SAMPLE_SIZE)),
+            variables=self.gen_data.random_dict(self.SAMPLE_SIZE),
+            linked_node=None,
+        )
 
-    def randomNode(self):
-        return Node(sockets=[self.randomSocket().put() for x in xrange(0, self.SAMPLE_SIZE)])
+    def random_socket_from(self, keys):
+        return Socket(
+            text=str(self.gen_data.random_lines_of_text(self.SAMPLE_SIZE)),
+            variables=self.gen_data.random_dict_from(keys),
+            linked_node=None,
+        )
 
-    def randomDocument(self):
-        return Document(nodes=[self.randomNode().put() for x in xrange(0, self.SAMPLE_SIZE)],
-                        variables=self.dataGenerator.randomDictionary(self.SAMPLE_SIZE))
+    def random_node(self):
+        return Node(sockets=[self.random_socket().put()
+                             for x
+                             in xrange(0, self.SAMPLE_SIZE)])
 
-    def randomAmendment(self):
+    def random_document(self):
+        return Document(
+            nodes=[self.random_node().put()
+                   for x
+                   in xrange(0, self.SAMPLE_SIZE)],
+            variables=self.gen_data.random_dict(self.SAMPLE_SIZE),
+        )
+
+    def random_amendment(self):
         pass
 
-    def randomAgreement(self):
+    def random_agreement(self):
         pass
 
-    def randomInstanceOfEach(self):
-        return [self.randomSocket(),
-                self.randomNode(),
-                self.randomDocument()]
-        #        self.randomAmendment(),
-        #        self.randomAgreement()]
+    def random_instance_of_each(self):
+        return [self.random_socket(),
+                self.random_node(),
+                self.random_document()]
+        #        self.random_amendment(),
+        #        self.random_agreement()]
 
