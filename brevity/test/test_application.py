@@ -30,7 +30,10 @@ class AbstractWebtestBaseClass(unittest.TestCase):
 
     def response_contains(self, response, target_object):
         """Verify inputted response contains inputted object."""
-        return str(target_object) in response.normal_body
+        for var in target_object._values:
+            if str(target_object._values[var]) not in response.normal_body:
+                return False
+        return True
 
     def activate_datastore_testbed(self):
         active_testbed = testbed.Testbed()
@@ -62,7 +65,7 @@ class DisplayObjectOnWebTestCase(AbstractWebtestBaseClass):
         for key in self.test_data_keys:
             response = self.testapp.get('/view/' + key.urlsafe())
             self.assertTrue(self.is_valid_response(response))
-            self.assertTrue(self.response_contains(response, str(key.get())))
+            self.assertTrue(self.response_contains(response, key.get()))
 
 
 class ModifyDataFromWebTestCase(AbstractWebtestBaseClass):

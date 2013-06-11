@@ -51,19 +51,22 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         self.assertEquals(test_socket.variables, test_variables)
         self.assertEquals(test_socket.linked_node, None)
         #4
-        self.assertEquals(test_socket, model.Socket(text=test_text,
-                                                 variables=test_variables))
-        self.assertNotEquals(test_socket, model.Socket(text='',
-                                                    variables=test_variables))
+        self.assertEquals(test_socket,
+                          model.Socket(text=test_text,
+                                       variables=test_variables))
+        self.assertNotEquals(test_socket,
+                             model.Socket(text='', variables=test_variables))
         self.assertNotEquals(test_socket, model.Socket(text=test_text,
-                                                    variables=None))
-        self.assertNotEquals(test_socket, model.Socket(text=test_text,
-                                                    variables=test_variables,
-                                                    linked_node=model.Node()))
+                                                       variables=None))
+        self.assertNotEquals(test_socket,
+                             model.Socket(text=test_text,
+                             variables=test_variables,
+                             linked_node=model.Node()))
         # 5
         self.assertRaises(db.BadValueError, lambda: model.Socket(text=0))
         self.assertRaises(db.BadValueError, lambda: model.Socket(variables=0))
-        self.assertRaises(db.BadValueError, lambda: model.Socket(linked_node=0))
+        self.assertRaises(db.BadValueError,
+                          lambda: model.Socket(linked_node=0))
         ####### TEST LINKED NODES #######
 
     def test_node(self):
@@ -71,13 +74,14 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         test_node = self.object_factory.random_node()
         for socket in test_node.sockets:
             node_variable_keys.extend(socket.get().variables.keys())
-        self.assertEquals(sorted(node_variable_keys), sorted(list(set(node_variable_keys))))
+        self.assertEquals(sorted(node_variable_keys),
+                          sorted(list(set(node_variable_keys))))
         node_sockets = sorted([x for x in test_node.sockets])
         self.assertEquals(node_sockets, sorted(list(set(node_sockets))))
         self.assertRaises(db.BadValueError, lambda: model.Node(sockets=0))
         self.assertRaises(db.BadValueError,
                           lambda: model.Node(sockets=[self.object_factory.random_node().put()]))
-    
+
     def test_document(self):
         document_variable_keys = []
         sample_document = self.object_factory.random_document()
@@ -89,13 +93,15 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
         document_nodes = sorted([x for x in sample_document.nodes])
         self.assertEquals(document_nodes, sorted(list(set(document_nodes))))
         self.assertRaises(db.BadValueError, lambda: model.Document(nodes=0))
-        self.assertRaises(db.BadValueError, lambda: model.Document(nodes=self.object_factory.random_socket().put()))
-        self.assertRaises(db.BadValueError, lambda: model.Document(variables=0))
+        self.assertRaises(db.BadValueError,
+                          lambda: model.Document(nodes=self.object_factory.random_socket().put()))
+        self.assertRaises(db.BadValueError,
+                          lambda: model.Document(variables=0))
 
     @unittest.expectedFailure
     def test_amendment(self):
         self.assertEquals(0, 1)
-    
+
     @unittest.expectedFailure
     def test_agreement(self):
         self.assertEquals(0, 1)
@@ -107,13 +113,14 @@ class CompleteAndConsistentDataModelTestCase(unittest.TestCase):
 class RandomDataGeneratorTestCase(unittest.TestCase):
     """Verify helper methods create valid test data.
     Other methods are factory methods.
-    Factory methods should be moved to a SampleData factory class in production code.
-    
+    Factory methods should be moved
+    to a SampleData factory class in production code.
+
     """
     def setUp(self):
         self.gen_data = model.RandomDataGenerator()
         self.SAMPLE_SIZE = 3
-    
+
     def runTest(self):
         self.assertEquals(len(self.gen_data.random_lines_of_text(self.SAMPLE_SIZE)),
                           self.SAMPLE_SIZE)
@@ -124,7 +131,8 @@ class RandomDataGeneratorTestCase(unittest.TestCase):
 
 
 class SampleObjectFactoryTestCase(unittest.TestCase):
-    """Ensure this class does not overlap with ConsistentAndCompleteDataModelTestCase.
+    """Ensure this class does not overlap
+    with ConsistentAndCompleteDataModelTestCase.
 
     """
     def setUp(self):
@@ -138,16 +146,19 @@ class SampleObjectFactoryTestCase(unittest.TestCase):
         for test_item in self.test_data_set:
             test_item_with_variations = self.object_factory.variations_of(test_item)
             test_item_with_variations.append(test_item)
-            # TODO verify contents of test_item_with_variations.append(testItem) are unique
-            self.assertEquals(len(test_item_with_variations), len(test_item._values)+1)
+            #TODO verify contents of test_item_with_variations.append(testItem)
+            # are unique
+            self.assertEquals(len(test_item_with_variations),
+                              len(test_item._values)+1)
         data_model_types = []
         for item in dir(model):
             item_class = eval('model.' + item)
-            if inspect.isclass(item_class) and issubclass(item_class, ndb.Model):
+            if (inspect.isclass(item_class)
+                    and issubclass(item_class, ndb.Model)):
                 data_model_types.append(item_class)
         types_from_factory = [instance.__class__
-                                          for instance
-                                          in self.object_factory.random_instance_of_each()]
+                              for instance
+                              in self.object_factory.random_instance_of_each()]
         self.assertEquals(sorted(data_model_types), sorted(types_from_factory))
 
     def tearDown(self):
