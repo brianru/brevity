@@ -11,16 +11,12 @@ from functools import partial
 # Validators
 def _is_dictionary(proposed_object, object_values):
     """Check if object_values is of type dict."""
-    if isinstance(object_values, dict):
-        return None
-    else:
+    if not isinstance(object_values, dict):
         raise db.BadValueError
 
 
 def _is_data_type(object_type, proposed_object, object_values):
-    if object_values.kind() == object_type:
-        return None
-    else:
+    if object_values.kind() != object_type:
         raise db.BadValueError
 
 
