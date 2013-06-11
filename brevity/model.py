@@ -6,7 +6,7 @@ import random
 import sys
 
 from google.appengine.ext import ndb, db
-
+from functools import partial
 
 # Validators
 def _is_dictionary(proposed_object, object_values):
@@ -17,21 +17,7 @@ def _is_dictionary(proposed_object, object_values):
         raise db.BadValueError
 
 
-def _is_socket(proposed_object, object_values):
-    """Check if object_values is a key for type Socket."""
-    return _is_data_type(proposed_object, object_values, 'Socket')
-
-
-def _is_node(proposed_object, object_values):
-    """Check if object_values is a key for type Node."""
-    return _is_data_type(proposed_object, object_values, 'Node')
-
-
-def _is_document(proposed_object, object_values):
-    return _is_data_type(proposed_object, object_values, 'Document')
-
-
-def _is_data_type(proposed_object, object_values, object_type):
+def _is_data_type(object_type, proposed_object, object_values):
     if object_values.kind() == object_type:
         return None
     else:
@@ -65,12 +51,12 @@ def urlsafekey_from(original_object):
 
 # Data model
 class Agreement(ndb.Model):
-    documents = ndb.KeyProperty(repeated=True, validator=_is_document)
+    documents = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Document'))
     meta_data = ndb.JsonProperty(validator=_is_dictionary)
 
 
 class Document(ndb.Model):
-    nodes = ndb.KeyProperty(repeated=True, validator=_is_node)
+    nodes = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Node'))
     variables = ndb.JsonProperty(validator=_is_dictionary)
 
 
@@ -80,7 +66,7 @@ class Amendment(Document):
 
 
 class Node(ndb.Model):
-    sockets = ndb.KeyProperty(repeated=True, validator=_is_socket)
+    sockets = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Socket'))
 
 
 class Socket(ndb.Model):
