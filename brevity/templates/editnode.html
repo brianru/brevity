@@ -1,0 +1,9 @@
+{% extends "templates/edit.html" %}
+{% import "templates/editmacros.html" as macros %}
+{% block content %}
+  {% for socketkey in instance.sockets %}
+   {{ macros.editkey(socketkey) }}
+  {% endfor %}
+{% endblock content %}
+
+

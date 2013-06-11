@@ -1,0 +1,9 @@
+{% extends "templates/edit.html" %}
+{% import "templates/editmacros.html" as macros %}
+{% block content %}
+  {% for nodekey in instance.nodes %}
+    {{ macros.editkey(nodekey) }}
+  {% endfor %}
+  {{ macros.editdict(instance.variables) }}
+{% endblock content %}
+

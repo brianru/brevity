@@ -1,16 +1,11 @@
-{% import 'templates/editmacros.html' as editmacros %}
 <html>
   <head>
     {% include 'templates/header.html' -%}
   </head>
   <body>
-    {% block body %}
-    <form action="/edit/{{ url_safe_key }}" method="post">
-        {{ editmacros.editsocket(object_instance, url_safe_key) }}
-    </form>
-    <script src="http://code.jquery.com/jquery.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    {% endblock body %}
+    {% block content %}
+    Is this working???
+    {% endblock content %}
   </body>
   <footer>
     {% include 'templates/footer.html' %}
