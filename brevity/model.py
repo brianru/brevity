@@ -170,19 +170,15 @@ class SampleObjectFactory(object):
             object_varations.append(object_copy)
         return object_varations
 
-    def random_socket(self):
-        return Socket(
-            text=str(self.gen_data.random_lines_of_text(self.SAMPLE_SIZE)),
-            variables=self.gen_data.random_dict(self.SAMPLE_SIZE),
-            linked_node=None,
-        )
-
     def random_socket_from(self, keys):
         return Socket(
             text=str(self.gen_data.random_lines_of_text(self.SAMPLE_SIZE)),
             variables=self.gen_data.random_dict_from(keys),
             linked_node=None,
         )
+
+    def random_socket(self):
+        return random_socket_from(self.SAMPLE_SIZE)
 
     def random_node(self):
         return Node(sockets=[self.random_socket().put()
