@@ -24,25 +24,28 @@ def _is_data_type(object_type, proposed_object, object_values):
         raise db.BadValueError
 
 
-def view_data_from(url_safe_key):
+def data_from_id(id):
     return {
-        'key': url_safe_key,
-        'kind': str(type_from_urlsafe(url_safe_key)).lower(),
-        'instance': instance_from_urlsafe(url_safe_key),
+        'id': id,
+        'kind': get_kind(id),
+        'instance': get_instance(id)
     }
 
 
-def instance_from_urlsafe(key):
-    """Get object instance from NDB using url safe key."""
-    return ndb.Key(urlsafe=key).get()
+def get_instance(id):
+    return ndb.Key(urlsafe=id).get()
 
 
-def type_from_urlsafe(url_key):
-    return ndb.Key(urlsafe=url_key).kind()
+def get_kind(id):
+    return ndb.Key(urlsafe=id).kind()
 
 
-def urlsafekey_from(original_object):
-    return original_object.put().urlsafe()
+def id_from(obj):
+    """
+    Returns a ndb object's id, which can be used to acquire a Key. The id is
+    url-safe.
+    """
+    return obj.put().urlsafe()
 
 
 # Data model
