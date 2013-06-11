@@ -46,14 +46,9 @@ def view_data_from(url_safe_key):
     }
 
 
-def _instance_from(key):
-    """Get object instance from NDB using key."""
-    return key.get()
-
-
 def instance_from_urlsafe(key):
     """Get object instance from NDB using url safe key."""
-    return _instance_from(ndb.Key(urlsafe=key))
+    return ndb.Key(urlsafe=key).get()
 
 
 def type_from_urlsafe(url_key):
@@ -229,4 +224,3 @@ class SampleObjectFactory(object):
                 self.random_document()]
         #        self.random_amendment(),
         #        self.random_agreement()]
-
