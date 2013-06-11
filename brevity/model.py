@@ -41,12 +41,8 @@ def type_from_urlsafe(url_key):
     return ndb.Key(urlsafe=url_key).kind()
 
 
-def _key_from(instance):
-    return instance.put()
-
-
 def urlsafekey_from(original_object):
-    return _key_from(original_object).urlsafe()
+    return original_object.put().urlsafe()
 
 
 # Data model
