@@ -6,76 +6,52 @@ import random
 import sys
 
 from google.appengine.ext import ndb, db
-
+from functools import partial
 
 # Validators
 def _is_dictionary(proposed_object, object_values):
     """Check if object_values is of type dict."""
-    if isinstance(object_values, dict):
-        return None
-    else:
+    if not isinstance(object_values, dict):
         raise db.BadValueError
 
 
-def _is_socket(proposed_object, object_values):
-    """Check if object_values is a key for type Socket."""
-    return _is_data_type(proposed_object, object_values, 'Socket')
-
-
-def _is_node(proposed_object, object_values):
-    """Check if object_values is a key for type Node."""
-    return _is_data_type(proposed_object, object_values, 'Node')
-
-
-def _is_document(proposed_object, object_values):
-    return _is_data_type(proposed_object, object_values, 'Document')
-
-
-def _is_data_type(proposed_object, object_values, object_type):
-    if object_values.kind() == object_type:
-        return None
-    else:
+def _is_data_type(object_type, proposed_object, object_values):
+    if object_values.kind() != object_type:
         raise db.BadValueError
 
 
-def view_data_from(url_safe_key):
+def data_from_id(id):
     return {
-        'key': url_safe_key,
-        'kind': str(type_from_urlsafe(url_safe_key)).lower(),
-        'instance': instance_from_urlsafe(url_safe_key),
+        'id': id,
+        'kind': get_kind(id),
+        'instance': get_instance(id)
     }
 
 
-def _instance_from(key):
-    """Get object instance from NDB using key."""
-    return key.get()
+def get_instance(id):
+    return ndb.Key(urlsafe=id).get()
 
 
-def instance_from_urlsafe(key):
-    """Get object instance from NDB using url safe key."""
-    return _instance_from(ndb.Key(urlsafe=key))
+def get_kind(id):
+    return ndb.Key(urlsafe=id).kind()
 
 
-def type_from_urlsafe(url_key):
-    return ndb.Key(urlsafe=url_key).kind()
-
-
-def _key_from(instance):
-    return instance.put()
-
-
-def urlsafekey_from(original_object):
-    return _key_from(original_object).urlsafe()
+def id_from(obj):
+    """
+    Returns a ndb object's id, which can be used to acquire a Key. The id is
+    url-safe.
+    """
+    return obj.put().urlsafe()
 
 
 # Data model
 class Agreement(ndb.Model):
-    documents = ndb.KeyProperty(repeated=True, validator=_is_document)
+    documents = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Document'))
     meta_data = ndb.JsonProperty(validator=_is_dictionary)
 
 
 class Document(ndb.Model):
-    nodes = ndb.KeyProperty(repeated=True, validator=_is_node)
+    nodes = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Node'))
     variables = ndb.JsonProperty(validator=_is_dictionary)
 
 
@@ -85,7 +61,7 @@ class Amendment(Document):
 
 
 class Node(ndb.Model):
-    sockets = ndb.KeyProperty(repeated=True, validator=_is_socket)
+    sockets = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Socket'))
 
 
 class Socket(ndb.Model):
@@ -190,19 +166,15 @@ class SampleObjectFactory(object):
             object_varations.append(object_copy)
         return object_varations
 
-    def random_socket(self):
-        return Socket(
-            text=str(self.gen_data.random_lines_of_text(self.SAMPLE_SIZE)),
-            variables=self.gen_data.random_dict(self.SAMPLE_SIZE),
-            linked_node=None,
-        )
-
     def random_socket_from(self, keys):
         return Socket(
             text=str(self.gen_data.random_lines_of_text(self.SAMPLE_SIZE)),
             variables=self.gen_data.random_dict_from(keys),
             linked_node=None,
         )
+
+    def random_socket(self):
+        return random_socket_from(self.SAMPLE_SIZE)
 
     def random_node(self):
         return Node(sockets=[self.random_socket().put()
@@ -229,4 +201,3 @@ class SampleObjectFactory(object):
                 self.random_document()]
         #        self.random_amendment(),
         #        self.random_agreement()]
-
