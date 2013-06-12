@@ -42,7 +42,7 @@ class EditPage(webapp2.RequestHandler):
             self.response.write(self.gen_template.render_template_for(values))
         else:
             self.factory = model.SampleObjectFactory()
-            url_safe_key = model.urlsafekey_from(self.factory.random_socket())
+            url_safe_key = model.urlsafekey_from(self.factory.random_document())
             self.redirect('/edit/' + str(url_safe_key))
 
     # TODO Refactor editpage post request.
