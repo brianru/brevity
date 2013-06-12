@@ -109,13 +109,10 @@ class ModifyDataFromWebTestCase(AbstractWebtestBaseClass):
             self.assertEquals(form.action, '/edit/' + key.urlsafe())
             test_object = key.get()
             self.assertTrue(self.response_contains(get_response, test_object))
-            # print('\nWAYBEFORE: %s' % key.get())
             # FIXME code directly modifies the object, defeats the purpose.
             # only supposed to modify the contents of the for
             form.value = self.factory.randomly_modify(test_object)
-            # print('\nBEFORE: %s' % key.get())
             post_response = form.submit()
-            # print('\nAFTER: %s' % key.get())
             self.assertTrue(False)  # FIXME changes not saving but tests PASS?!
             self.assertTrue(self.is_valid_response(post_response))
             self.assertTrue(self.response_contains(post_response, key.get()))

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import webapp2
+from pprint import pprint
 
 import model
 import view
@@ -44,17 +45,23 @@ class EditPage(webapp2.RequestHandler):
             id = model.id_from(self.factory.random_socket())
             self.redirect('/edit/' + str(id))
 
-    # TODO Refactor editpage post request.
     def post(self, id):
         self.gen_template = view.WebTemplateGenerator()
         data_object = model.get_instance(id)
+        # PARSE REQUEST
+        parsed_data = []
         for arg in self.request.arguments():
-            pass
-        print('Request attributes: %s' % self.request.arguments())
-        # TODO modify data object per textareas in self.request
-        data_object.put()
+            a, b = arg.split('_')
+            parsed_data.append(dict(zip(('id', 'attr', 'val'),
+                                        (a, b, self.request.get(arg)))))
+        pprint(parsed_data)
+        for arg in parsed_data:
+            data_object.__setattr__(arg['attr'], arg['val'])
+            # FIXME working for text but no other attr.
+            print(dir(data_object))
+            data_object.put()
         values = model.data_from_id(id)
-        values.update({'action': 'edit'})
+        values.update({'action': 'edit', 'message': 'Victory!!!'})
         self.response.headers['Content-Type'] = 'text/html'
         self.response.write(self.gen_template.render_template_for(values))
 

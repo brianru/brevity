@@ -3,6 +3,6 @@
 {% block content %}
     {{ macros.edittext(instance.text, id) }}
     {{ macros.editdict(instance.variables, id) }}
-    {{ macros.editkey(instance.linked_node) }}
+    {{ macros.editkey(instance.linked_node, id) }}
 {% endblock content %}
 

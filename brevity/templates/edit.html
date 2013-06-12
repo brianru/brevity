@@ -3,6 +3,7 @@
     {% include 'templates/header.html' -%}
   </head>
   <body>
+    <h1>{{ message }}<br></h1>
     <form action="/edit/{{ id }}" method="post">
       {% block content %}
       Is this working???
