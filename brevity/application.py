@@ -27,8 +27,7 @@ class ViewPage(webapp2.RequestHandler):
             self.response.write(self.gen_template.render_template_for(values))
         else:
             factory = model.SampleObjectFactory()
-            sample_socket = factory.random_document()
-            id = model.id_from(sample_socket)
+            id = model.id_from(factory.random_document())
             self.redirect('/view/' + str(id))
 
 
@@ -42,27 +41,22 @@ class EditPage(webapp2.RequestHandler):
             self.response.write(self.gen_template.render_template_for(values))
         else:
             self.factory = model.SampleObjectFactory()
-<<<<<<< HEAD
-            url_safe_key = model.urlsafekey_from(self.factory.random_document())
-            self.redirect('/edit/' + str(url_safe_key))
-=======
             id = model.id_from(self.factory.random_socket())
             self.redirect('/edit/' + str(id))
->>>>>>> zachallaun-code-review
 
     # TODO Refactor editpage post request.
     def post(self, id):
+        self.gen_template = view.WebTemplateGenerator()
         data_object = model.get_instance(id)
-        data_object.text = self.request.get('content')
-        print('get items: %s' % self.request.POST.items())
+        for arg in self.request.arguments():
+            pass
+        print('Request attributes: %s' % self.request.arguments())
+        # TODO modify data object per textareas in self.request
         data_object.put()
+        values = model.data_from_id(id)
+        values.update({'action': 'edit'})
         self.response.headers['Content-Type'] = 'text/html'
-        self.response.write(self.EDIT_PAGE_HTML % (
-            id,
-            data_object.text,
-            data_object.variables,
-            data_object.linked_node,
-        ))
+        self.response.write(self.gen_template.render_template_for(values))
 
 
 class CreatePage(webapp2.RequestHandler):

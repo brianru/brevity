@@ -25,13 +25,13 @@ class WebTemplateGenerator(object):
         elif 'action' in variables.keys():
             return self._template_selector(variables['action'])
         else:
-            raise KeyError
+            raise KeyError(variables)
 
     def _get_template_if_valid(self, proposed_template):
         if proposed_template in self.CHILD_TEMPLATES:
             return proposed_template
         else:
-            raise KeyError
+            raise KeyError(proposed_template)
 
     def render_template_for(self, variables):
         template = 'templates/' + self._template_for(variables)

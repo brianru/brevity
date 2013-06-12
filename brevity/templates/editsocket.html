@@ -1,8 +1,8 @@
 {% extends "templates/edit.html" %}
 {% import "templates/editmacros.html" as macros %}
 {% block content %}
-    {{ macros.edittext(instance.text, key) }}
-    {{ macros.editdict(instance.variables, key) }}
+    {{ macros.edittext(instance.text, id) }}
+    {{ macros.editdict(instance.variables, id) }}
     {{ macros.editkey(instance.linked_node) }}
 {% endblock content %}
 

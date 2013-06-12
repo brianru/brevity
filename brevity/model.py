@@ -8,6 +8,7 @@ import sys
 from google.appengine.ext import ndb, db
 from functools import partial
 
+
 # Validators
 def _is_dictionary(proposed_object, object_values):
     """Check if object_values is of type dict."""
@@ -20,10 +21,11 @@ def _is_data_type(object_type, proposed_object, object_values):
         raise db.BadValueError
 
 
+# Public convenience methods
 def data_from_id(id):
     return {
         'id': id,
-        'kind': get_kind(id),
+        'kind': str(get_kind(id)).lower(),
         'instance': get_instance(id)
     }
 
@@ -46,12 +48,14 @@ def id_from(obj):
 
 # Data model
 class Agreement(ndb.Model):
-    documents = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Document'))
+    documents = ndb.KeyProperty(repeated=True,
+                                validator=partial(_is_data_type, 'Document'))
     meta_data = ndb.JsonProperty(validator=_is_dictionary)
 
 
 class Document(ndb.Model):
-    nodes = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Node'))
+    nodes = ndb.KeyProperty(repeated=True,
+                            validator=partial(_is_data_type, 'Node'))
     variables = ndb.JsonProperty(validator=_is_dictionary)
 
 
@@ -61,7 +65,8 @@ class Amendment(Document):
 
 
 class Node(ndb.Model):
-    sockets = ndb.KeyProperty(repeated=True, validator=partial(_is_data_type, 'Socket'))
+    sockets = ndb.KeyProperty(repeated=True,
+                              validator=partial(_is_data_type, 'Socket'))
 
 
 class Socket(ndb.Model):
@@ -174,7 +179,11 @@ class SampleObjectFactory(object):
         )
 
     def random_socket(self):
-        return random_socket_from(self.SAMPLE_SIZE)
+        return Socket(
+            text=self.gen_data.random_text(),
+            variables=self.gen_data.random_dict(self.SAMPLE_SIZE),
+            linked_node=None,
+        )
 
     def random_node(self):
         return Node(sockets=[self.random_socket().put()

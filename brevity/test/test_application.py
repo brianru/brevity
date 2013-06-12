@@ -31,7 +31,26 @@ class AbstractWebtestBaseClass(unittest.TestCase):
     def response_contains(self, response, target_object):
         """Verify inputted response contains inputted object."""
         for var in target_object._values:
-            if str(target_object._values[var]) not in response.normal_body:
+            if (isinstance(target_object._values[var], str) and
+                    not self.response_contains_str(response, target_object._values[var])):
+                return False
+            elif (isinstance(target_object._values[var], dict) and
+                    not self.response_contains_dict(response, target_object._values[var])):
+                return False
+            elif target_object._values[var] is None:
+                pass
+            #TODO what about linked_node, sockets, documents and such?
+        return True
+
+    def response_contains_str(self, response, string):
+        return string.encode('ascii') in response
+
+    def response_contains_dict(self, response, dictionary):
+        for k in dictionary.keys():
+            if k.encode('ascii') not in response:
+                return False
+        for v in dictionary.values():
+            if v.encode('ascii') not in response:
                 return False
         return True
 
@@ -69,9 +88,10 @@ class DisplayObjectOnWebTestCase(AbstractWebtestBaseClass):
 
 
 class ModifyDataFromWebTestCase(AbstractWebtestBaseClass):
-    """Populate modify and submit HTML form, succesfully communicating with NDB at each end.
+    """Populate modify and submit HTML form,
+    succesfully communicating with NDB at each end.
     Test /edit/(.*)
-    
+
     """
     def setUp(self):
         super(ModifyDataFromWebTestCase, self).setUp()
@@ -84,19 +104,23 @@ class ModifyDataFromWebTestCase(AbstractWebtestBaseClass):
         for key in self.test_data_keys:
             get_response = self.testapp.get('/edit/' + key.urlsafe())
             self.assertTrue(self.is_valid_response(get_response))
-            #self.assertTrue(self.response_contains(get_response, str(key.get())))
+            self.assertTrue(self.response_contains(get_response, key.get()))
             form = get_response.form
             self.assertEquals(form.action, '/edit/' + key.urlsafe())
             test_object = key.get()
-            self.assertEquals(test_object.text, form['content'].value)
-            self.assertIn(str(test_object.variables), form['variables'].value)
-            #self.assertEquals(test_object.linked_node, form['linked_node'].value)
-            #form['content'].value = self.gen_data.randomly_nodify(key.get())
+            self.assertTrue(self.response_contains(get_response, test_object))
+            # print('\nWAYBEFORE: %s' % key.get())
+            # FIXME code directly modifies the object, defeats the purpose.
+            # only supposed to modify the contents of the for
+            form.value = self.factory.randomly_modify(test_object)
+            # print('\nBEFORE: %s' % key.get())
             post_response = form.submit()
+            # print('\nAFTER: %s' % key.get())
+            self.assertTrue(False)  # FIXME changes not saving but tests PASS?!
             self.assertTrue(self.is_valid_response(post_response))
-            self.assertTrue(self.response_contains(post_response, str(key.get())))
-            self.assertNotEquals(get_response.normal_body, post_response.normal_body)
-            self.assertTrue(self.response_contains(post_response, str(key.get())))
+            self.assertTrue(self.response_contains(post_response, key.get()))
+            self.assertNotEquals(get_response.normal_body,
+                                 post_response.normal_body)
 
 
 class CreateDataFromWebTestCase(unittest.TestCase):

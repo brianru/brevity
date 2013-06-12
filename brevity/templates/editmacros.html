@@ -19,10 +19,10 @@
   </div>
 {%- endmacro %}
 
-{% macro editkey(key) -%}
+{% macro editkey(key_object) -%}
   <div>
     id:<br>
-    <textarea name="{{ key }}_linked_node" rows="1" cols="80">{{ key }}</textarea>
+    <textarea name="{{ key }}_keyobject" rows="1" cols="80">{{ key_object }}</textarea>
   </div>
 {%- endmacro %}
 

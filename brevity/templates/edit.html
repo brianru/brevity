@@ -3,9 +3,12 @@
     {% include 'templates/header.html' -%}
   </head>
   <body>
-    {% block content %}
-    Is this working???
-    {% endblock content %}
+    <form action="/edit/{{ id }}" method="post">
+      {% block content %}
+      Is this working???
+      {% endblock content %}
+      <div><input type="submit" value="Submit"></div>
+    </form>
   </body>
   <footer>
     {% include 'templates/footer.html' %}
